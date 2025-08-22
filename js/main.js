@@ -126,10 +126,10 @@ function initSmoothScroll() {
 const artworks = [
     {
         id: 1,
-        title: "抽象印象",
+        titleKey: "artwork-1-title",
+        descriptionKey: "artwork-1-desc",
         category: "paintings",
         image: "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=500&h=600&fit=crop",
-        description: "探索色彩与情感的深层连接，通过抽象的形式表达内心的感受。",
         details: {
             medium: "油画",
             size: "80cm × 100cm",
@@ -138,10 +138,10 @@ const artworks = [
     },
     {
         id: 2,
-        title: "数字梦境",
+        titleKey: "artwork-2-title",
+        descriptionKey: "artwork-2-desc",
         category: "digital",
         image: "https://images.unsplash.com/photo-1549490349-8643362247b5?w=500&h=600&fit=crop",
-        description: "运用数字技术创造的超现实主义作品，展现梦境与现实的边界。",
         details: {
             medium: "数字艺术",
             size: "3000px × 4000px",
@@ -150,10 +150,10 @@ const artworks = [
     },
     {
         id: 3,
-        title: "人物素描",
+        titleKey: "artwork-3-title",
+        descriptionKey: "artwork-3-desc",
         category: "sketches",
         image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500&h=600&fit=crop",
-        description: "通过细腻的线条捕捉人物的神韵和情感表达。",
         details: {
             medium: "炭笔素描",
             size: "40cm × 50cm",
@@ -162,10 +162,10 @@ const artworks = [
     },
     {
         id: 4,
-        title: "风景写生",
+        titleKey: "artwork-4-title",
+        descriptionKey: "artwork-4-desc",
         category: "paintings",
         image: "https://images.unsplash.com/photo-1578321272176-b7bbc0679853?w=500&h=600&fit=crop",
-        description: "自然风光的真实记录，展现大自然的美丽与宁静。",
         details: {
             medium: "水彩",
             size: "60cm × 80cm",
@@ -174,10 +174,10 @@ const artworks = [
     },
     {
         id: 5,
-        title: "未来城市",
+        titleKey: "artwork-5-title",
+        descriptionKey: "artwork-5-desc",
         category: "digital",
         image: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=500&h=600&fit=crop",
-        description: "对未来城市景观的想象，融合科技与人文元素。",
         details: {
             medium: "数字绘画",
             size: "4000px × 3000px",
@@ -186,10 +186,10 @@ const artworks = [
     },
     {
         id: 6,
-        title: "静物组合",
+        titleKey: "artwork-6-title",
+        descriptionKey: "artwork-6-desc",
         category: "sketches",
         image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500&h=600&fit=crop",
-        description: "日常物品的艺术化表达，探索光影与形态的关系。",
         details: {
             medium: "铅笔素描",
             size: "35cm × 45cm",
@@ -213,11 +213,14 @@ function initGallery() {
             artworkCard.dataset.category = artwork.category;
             artworkCard.style.animationDelay = `${index * 0.1}s`;
             
+            const title = getText(artwork.titleKey);
+            const description = getText(artwork.descriptionKey);
+            
             artworkCard.innerHTML = `
-                <img src="${artwork.image}" alt="${artwork.title}" class="artwork-image" loading="lazy">
+                <img src="${artwork.image}" alt="${title}" class="artwork-image" loading="lazy">
                 <div class="artwork-info">
-                    <h3 class="artwork-title">${artwork.title}</h3>
-                    <p class="artwork-description">${artwork.description}</p>
+                    <h3 class="artwork-title">${title}</h3>
+                    <p class="artwork-description">${description}</p>
                 </div>
             `;
             
@@ -254,6 +257,10 @@ function initGallery() {
     
     // 初始渲染
     renderArtworks();
+    
+    // 将渲染函数添加到全局，供i18n使用
+    window.renderArtworks = renderArtworks;
+    window.artworks = artworks;
 }
 
 // 模态框功能
@@ -292,15 +299,18 @@ function openModal(artwork) {
     const modalDescription = document.getElementById('modal-description');
     const modalDetails = document.getElementById('modal-details');
     
+    const title = getText(artwork.titleKey);
+    const description = getText(artwork.descriptionKey);
+    
     modalImage.src = artwork.image;
-    modalImage.alt = artwork.title;
-    modalTitle.textContent = artwork.title;
-    modalDescription.textContent = artwork.description;
+    modalImage.alt = title;
+    modalTitle.textContent = title;
+    modalDescription.textContent = description;
     
     modalDetails.innerHTML = `
-        <p><strong>媒介：</strong>${artwork.details.medium}</p>
-        <p><strong>尺寸：</strong>${artwork.details.size}</p>
-        <p><strong>年份：</strong>${artwork.details.year}</p>
+        <p><strong>${getText('modal-medium')}：</strong>${artwork.details.medium}</p>
+        <p><strong>${getText('modal-size')}：</strong>${artwork.details.size}</p>
+        <p><strong>${getText('modal-year')}：</strong>${artwork.details.year}</p>
     `;
     
     modal.style.display = 'block';

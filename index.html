@@ -34,14 +34,21 @@
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <div class="nav-logo">
-                <a href="#home">林时林</a>
+                <a href="#home" data-i18n="artist-name">林士林</a>
             </div>
             <div class="nav-menu" id="nav-menu">
-                <a href="#home" class="nav-link">首页</a>
-                <a href="#about" class="nav-link">关于</a>
-                <a href="#gallery" class="nav-link">作品</a>
-                <a href="#process" class="nav-link">创作</a>
-                <a href="#contact" class="nav-link">联系</a>
+                <a href="#home" class="nav-link" data-i18n="nav-home">首页</a>
+                <a href="#about" class="nav-link" data-i18n="nav-about">关于</a>
+                <a href="#gallery" class="nav-link" data-i18n="nav-gallery">作品</a>
+                <a href="#process" class="nav-link" data-i18n="nav-process">创作</a>
+                <a href="#contact" class="nav-link" data-i18n="nav-contact">联系</a>
+                
+                <!-- 语言切换器 -->
+                <div class="language-switcher">
+                    <button class="lang-btn" data-lang="zh" title="中文">中</button>
+                    <button class="lang-btn" data-lang="en" title="English">EN</button>
+                    <button class="lang-btn" data-lang="ja" title="日本語">日</button>
+                </div>
             </div>
             <div class="hamburger" id="hamburger">
                 <span></span>
@@ -56,13 +63,13 @@
         <div class="hero-content">
             <div class="hero-text">
                 <h1 class="hero-title">
-                    <span class="line">创造</span>
-                    <span class="line">独特</span>
-                    <span class="line">艺术</span>
+                    <span class="line" data-i18n="hero-line1">创造</span>
+                    <span class="line" data-i18n="hero-line2">独特</span>
+                    <span class="line" data-i18n="hero-line3">艺术</span>
                 </h1>
-                <p class="hero-subtitle">探索色彩与形态的无限可能</p>
+                <p class="hero-subtitle" data-i18n="hero-subtitle">探索色彩与形态的无限可能</p>
                 <a href="#gallery" class="cta-button">
-                    <span>查看作品</span>
+                    <span data-i18n="cta-button">查看作品</span>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                         <path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -86,27 +93,26 @@
     <section id="about" class="about">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title">关于艺术家</h2>
-                <p class="section-subtitle">Art is the bridge between the visible and invisible worlds</p>
+                <h2 class="section-title" data-i18n="about-title">关于艺术家</h2>
+                <p class="section-subtitle" data-i18n="about-subtitle">Art is the bridge between the visible and invisible worlds</p>
             </div>
             <div class="about-content">
                 <div class="about-text">
-                    <p class="about-intro">
-                        我是一位专注于[艺术风格/媒介]的艺术家，致力于通过艺术作品探索[主题/理念]。
-                        我的创作灵感来源于[灵感来源]，希望通过独特的视觉语言与观众产生共鸣。
+                    <p class="about-intro" data-i18n="about-intro">
+                        我是一位专注于当代艺术创作的艺术家，致力于通过多样化的媒介探索人性、自然与社会的深层联系。我的作品融合了传统技法与现代理念，希望通过独特的视觉语言与观众产生共鸣。
                     </p>
                     <div class="stats">
                         <div class="stat-item">
                             <span class="stat-number" data-count="50">0</span>
-                            <span class="stat-label">作品</span>
+                            <span class="stat-label" data-i18n="stat-artworks">作品</span>
                         </div>
                         <div class="stat-item">
                             <span class="stat-number" data-count="5">0</span>
-                            <span class="stat-label">展览</span>
+                            <span class="stat-label" data-i18n="stat-exhibitions">展览</span>
                         </div>
                         <div class="stat-item">
                             <span class="stat-number" data-count="3">0</span>
-                            <span class="stat-label">年经验</span>
+                            <span class="stat-label" data-i18n="stat-experience">年经验</span>
                         </div>
                     </div>
                 </div>
@@ -123,16 +129,16 @@
     <section id="gallery" class="gallery">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title">作品集</h2>
-                <p class="section-subtitle">每一幅作品都是内心世界的投射</p>
+                <h2 class="section-title" data-i18n="gallery-title">作品集</h2>
+                <p class="section-subtitle" data-i18n="gallery-subtitle">每一幅作品都是内心世界的投射</p>
             </div>
             
             <!-- 作品分类过滤器 -->
             <div class="filter-tabs">
-                <button class="filter-btn active" data-filter="all">全部</button>
-                <button class="filter-btn" data-filter="paintings">绘画</button>
-                <button class="filter-btn" data-filter="digital">数字艺术</button>
-                <button class="filter-btn" data-filter="sketches">素描</button>
+                <button class="filter-btn active" data-filter="all" data-i18n="filter-all">全部</button>
+                <button class="filter-btn" data-filter="paintings" data-i18n="filter-paintings">绘画</button>
+                <button class="filter-btn" data-filter="digital" data-i18n="filter-digital">数字艺术</button>
+                <button class="filter-btn" data-filter="sketches" data-i18n="filter-sketches">素描</button>
             </div>
 
             <!-- 作品网格 -->
@@ -146,29 +152,29 @@
     <section id="process" class="process">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title">创作过程</h2>
-                <p class="section-subtitle">从概念到成品的艺术之旅</p>
+                <h2 class="section-title" data-i18n="process-title">创作过程</h2>
+                <p class="section-subtitle" data-i18n="process-subtitle">从概念到成品的艺术之旅</p>
             </div>
             <div class="process-steps">
                 <div class="step">
                     <div class="step-number">01</div>
-                    <h3>灵感捕捉</h3>
-                    <p>观察生活中的细节，收集色彩和形态的灵感</p>
+                    <h3 data-i18n="step1-title">灵感捕捉</h3>
+                    <p data-i18n="step1-desc">观察生活中的细节，收集色彩和形态的灵感</p>
                 </div>
                 <div class="step">
                     <div class="step-number">02</div>
-                    <h3>概念构思</h3>
-                    <p>将抽象的想法转化为具体的视觉概念</p>
+                    <h3 data-i18n="step2-title">概念构思</h3>
+                    <p data-i18n="step2-desc">将抽象的想法转化为具体的视觉概念</p>
                 </div>
                 <div class="step">
                     <div class="step-number">03</div>
-                    <h3>创作实现</h3>
-                    <p>运用各种技法和媒介将概念变为现实</p>
+                    <h3 data-i18n="step3-title">创作实现</h3>
+                    <p data-i18n="step3-desc">运用各种技法和媒介将概念变为现实</p>
                 </div>
                 <div class="step">
                     <div class="step-number">04</div>
-                    <h3>完善细节</h3>
-                    <p>精雕细琢，让每个细节都完美呈现</p>
+                    <h3 data-i18n="step4-title">完善细节</h3>
+                    <p data-i18n="step4-desc">精雕细琢，让每个细节都完美呈现</p>
                 </div>
             </div>
         </div>
@@ -178,17 +184,17 @@
     <section id="contact" class="contact">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title">联系我</h2>
-                <p class="section-subtitle">让我们一起探讨艺术的无限可能</p>
+                <h2 class="section-title" data-i18n="contact-title">联系我</h2>
+                <p class="section-subtitle" data-i18n="contact-subtitle">让我们一起探讨艺术的无限可能</p>
             </div>
             <div class="contact-content">
                 <div class="contact-info">
                     <div class="contact-item">
-                        <h3>邮箱</h3>
+                        <h3 data-i18n="contact-email">邮箱</h3>
                         <p>linshilin.art@gmail.com</p>
                     </div>
                     <div class="contact-item">
-                        <h3>社交媒体</h3>
+                        <h3 data-i18n="contact-social">社交媒体</h3>
                         <div class="social-links">
                             <a href="#" class="social-link" aria-label="Instagram">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -207,10 +213,10 @@
                 </div>
                 <div class="contact-form">
                     <form id="contact-form">
-                        <input type="text" name="name" placeholder="您的姓名" required>
-                        <input type="email" name="email" placeholder="邮箱地址" required>
-                        <textarea name="message" placeholder="想说的话..." rows="5" required></textarea>
-                        <button type="submit" class="submit-btn">发送消息</button>
+                        <input type="text" name="name" data-i18n="form-name" placeholder="您的姓名" required>
+                        <input type="email" name="email" data-i18n="form-email" placeholder="邮箱地址" required>
+                        <textarea name="message" data-i18n="form-message" placeholder="想说的话..." rows="5" required></textarea>
+                        <button type="submit" class="submit-btn" data-i18n="form-submit">发送消息</button>
                     </form>
                 </div>
             </div>
@@ -220,7 +226,7 @@
     <!-- 页脚 -->
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2025 林时林. All rights reserved.</p>
+            <p>&copy; 2025 <span data-i18n="artist-name">林士林</span>. <span data-i18n="copyright">All rights reserved</span>.</p>
         </div>
     </footer>
 
@@ -238,6 +244,7 @@
     </div>
 
     <!-- JavaScript -->
+    <script src="./js/i18n.js"></script>
     <script src="./js/main.js"></script>
 </body>
 </html>
