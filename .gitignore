@@ -1,0 +1,61 @@
+# 操作系统生成的文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 编辑器和IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 临时文件
+*.tmp
+*.temp
+*.log
+
+# 缓存文件
+*.cache
+.cache/
+
+# 备份文件
+*.bak
+*.backup
+*.orig
+
+# 依赖文件（如果使用包管理器）
+node_modules/
+package-lock.json
+yarn.lock
+
+# 构建输出（如果有构建过程）
+dist/
+build/
+.output/
+
+# 环境变量文件
+.env
+.env.local
+.env.production
+
+# 图片源文件（保留压缩后的版本）
+*.psd
+*.ai
+*.sketch
+
+# 大型媒体文件（可选择性忽略）
+# *.mov
+# *.mp4
+# *.avi
+
+# 测试覆盖率报告
+coverage/
+.nyc_output/
+
+# 文档生成文件
+docs/build/
