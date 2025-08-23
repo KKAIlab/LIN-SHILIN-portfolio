@@ -3,56 +3,72 @@ function updateProfileData() {
     const storedProfile = localStorage.getItem('profile_data');
     if (storedProfile) {
         const profile = JSON.parse(storedProfile);
+        console.log('更新个人信息:', profile); // 调试日志
         
-        // 更新艺术家姓名
+        // 更新艺术家姓名（不被i18n覆盖）
         const artistNameElements = document.querySelectorAll('[data-i18n="artist-name"]');
         artistNameElements.forEach(element => {
             element.textContent = profile.name;
+            element.setAttribute('data-profile-updated', 'true'); // 标记已更新
         });
         
-        // 更新关于页面的个人简介
+        // 更新关于页面的个人简介（不被i18n覆盖）
         const aboutIntro = document.querySelector('[data-i18n="about-intro"]');
         if (aboutIntro) {
             aboutIntro.textContent = profile.bio;
+            aboutIntro.setAttribute('data-profile-updated', 'true'); // 标记已更新
         }
         
         // 更新联系邮箱
-        const contactEmailP = document.querySelector('.contact-item p');
-        if (contactEmailP && contactEmailP.textContent.includes('@')) {
-            contactEmailP.textContent = profile.email;
-        }
-        
-        // 更新统计数据的data-count属性
-        const statNumbers = document.querySelectorAll('.stat-number[data-count]');
-        statNumbers.forEach(element => {
-            const statItem = element.closest('.stat-item');
-            if (statItem) {
-                const statLabel = statItem.querySelector('.stat-label');
-                if (statLabel) {
-                    const labelText = statLabel.textContent || statLabel.getAttribute('data-i18n');
-                    if (labelText.includes('作品') || labelText.includes('artworks')) {
-                        element.dataset.count = profile.stats.artworks;
-                        element.textContent = profile.stats.artworks;
-                    } else if (labelText.includes('展览') || labelText.includes('exhibitions')) {
-                        element.dataset.count = profile.stats.exhibitions;
-                        element.textContent = profile.stats.exhibitions;
-                    } else if (labelText.includes('经验') || labelText.includes('experience')) {
-                        element.dataset.count = profile.stats.experience;
-                        element.textContent = profile.stats.experience;
-                    }
-                }
+        const contactEmailElements = document.querySelectorAll('.contact-item p');
+        contactEmailElements.forEach(element => {
+            if (element.textContent.includes('@') || element.textContent.includes('linshilin')) {
+                element.textContent = profile.email;
             }
         });
+        
+        // 更新统计数据
+        updateStatistics(profile.stats);
+        
+        console.log('个人信息更新完成'); // 调试日志
     }
+}
+
+// 单独的统计数据更新函数
+function updateStatistics(stats) {
+    const statNumbers = document.querySelectorAll('.stat-number[data-count]');
+    statNumbers.forEach(element => {
+        const statItem = element.closest('.stat-item');
+        if (statItem) {
+            const statLabel = statItem.querySelector('.stat-label');
+            if (statLabel) {
+                const labelText = statLabel.textContent || statLabel.getAttribute('data-i18n');
+                if (labelText.includes('作品') || labelText.includes('artworks')) {
+                    element.dataset.count = stats.artworks;
+                    element.textContent = stats.artworks;
+                } else if (labelText.includes('展览') || labelText.includes('exhibitions')) {
+                    element.dataset.count = stats.exhibitions;
+                    element.textContent = stats.exhibitions;
+                } else if (labelText.includes('经验') || labelText.includes('experience')) {
+                    element.dataset.count = stats.experience;
+                    element.textContent = stats.experience;
+                }
+            }
+        }
+    });
 }
 
 // 监听localStorage变化，实时更新页面内容
 function listenForDataUpdates() {
+    console.log('启动数据监听...'); // 调试日志
+    
     // 监听storage事件（跨标签页更新）
     window.addEventListener('storage', function(e) {
+        console.log('检测到localStorage变化:', e.key); // 调试日志
         if (e.key === 'profile_data' || e.key === 'artworks_data' || e.key === 'i18n_data') {
             // 重新加载数据并更新页面
             setTimeout(() => {
+                console.log('执行跨标签页数据更新'); // 调试日志
                 updateProfileData();
                 reloadArtworks();
                 reloadI18nData();
@@ -65,26 +81,51 @@ function listenForDataUpdates() {
     let lastArtworksUpdate = localStorage.getItem('artworks_data');
     let lastI18nUpdate = localStorage.getItem('i18n_data');
     
-    setInterval(() => {
+    const checkInterval = setInterval(() => {
         const currentProfile = localStorage.getItem('profile_data');
         const currentArtworks = localStorage.getItem('artworks_data');
         const currentI18n = localStorage.getItem('i18n_data');
         
+        let hasUpdates = false;
+        
         if (currentProfile !== lastProfileUpdate) {
+            console.log('检测到个人信息变化'); // 调试日志
             lastProfileUpdate = currentProfile;
             updateProfileData();
+            hasUpdates = true;
         }
         
         if (currentArtworks !== lastArtworksUpdate) {
+            console.log('检测到作品数据变化'); // 调试日志
             lastArtworksUpdate = currentArtworks;
             reloadArtworks();
+            hasUpdates = true;
         }
         
         if (currentI18n !== lastI18nUpdate) {
+            console.log('检测到多语言数据变化'); // 调试日志
             lastI18nUpdate = currentI18n;
             reloadI18nData();
+            hasUpdates = true;
+        }
+        
+        if (hasUpdates) {
+            console.log('数据更新完成，重新应用个人信息'); // 调试日志
+            // 确保个人信息最后更新，避免被覆盖
+            setTimeout(updateProfileData, 200);
         }
     }, 1000); // 每秒检查一次
+    
+    // 页面卸载时清除定时器
+    window.addEventListener('beforeunload', () => {
+        clearInterval(checkInterval);
+    });
+    
+    // 手动触发一次更新（确保页面加载时显示最新数据）
+    setTimeout(() => {
+        console.log('页面加载完成，执行初始数据更新'); // 调试日志
+        updateProfileData();
+    }, 500);
 }
 
 // 重新加载作品数据
@@ -113,6 +154,32 @@ function reloadI18nData() {
     }
 }
 
+// 添加全局函数用于手动刷新数据
+window.refreshProfileData = function() {
+    console.log('手动刷新个人信息数据'); // 调试日志
+    updateProfileData();
+    
+    // 显示提示
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #48bb78;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        z-index: 10000;
+        font-size: 14px;
+    `;
+    notification.textContent = '个人信息已刷新';
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        document.body.removeChild(notification);
+    }, 2000);
+};
+
 // 等待 DOM 加载完成
 document.addEventListener('DOMContentLoaded', function() {
     // 初始化所有功能
@@ -120,7 +187,12 @@ document.addEventListener('DOMContentLoaded', function() {
     initNavigation();
     initMobileMenu();
     initSmoothScroll();
-    updateProfileData(); // 更新个人信息
+    
+    // 延迟更新个人信息，确保DOM完全加载
+    setTimeout(() => {
+        updateProfileData(); // 更新个人信息
+    }, 100);
+    
     initGallery();
     initModal();
     initCounters();
@@ -130,6 +202,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 启动数据监听
     listenForDataUpdates();
+    
+    // 添加键盘快捷键：按F5强制刷新个人信息
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'F5' && e.ctrlKey) {
+            e.preventDefault();
+            window.refreshProfileData();
+        }
+    });
 });
 
 // 页面加载动画

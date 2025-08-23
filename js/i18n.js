@@ -246,6 +246,13 @@ function switchLanguage(lang) {
     // 更新所有带有 data-i18n 属性的元素
     document.querySelectorAll('[data-i18n]').forEach(element => {
         const key = element.getAttribute('data-i18n');
+        
+        // 检查是否是已被个人信息更新的元素，如果是则跳过
+        if (element.getAttribute('data-profile-updated') === 'true') {
+            console.log('跳过已更新的个人信息元素:', key);
+            return;
+        }
+        
         if (i18n[lang] && i18n[lang][key]) {
             // 检查元素类型
             if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
