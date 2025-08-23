@@ -1,5 +1,17 @@
-// 国际化语言资源
-const i18n = {
+// 获取国际化语言资源（优先从localStorage获取）
+function getI18nData() {
+    const storedI18n = localStorage.getItem('i18n_data');
+    if (storedI18n) {
+        return JSON.parse(storedI18n);
+    }
+    
+    // 默认多语言数据（作为后备）
+    return getDefaultI18nData();
+}
+
+// 默认国际化语言资源
+function getDefaultI18nData() {
+    return {
     // 中文 (默认)
     zh: {
         // 艺术家姓名
@@ -218,8 +230,11 @@ const i18n = {
         'modal-medium': '媒体',
         'modal-size': 'サイズ',
         'modal-year': '年'
-    }
-};
+    };
+}
+
+// 国际化语言资源
+const i18n = getI18nData();
 
 // 当前语言
 let currentLanguage = 'zh';

@@ -1,3 +1,118 @@
+// 更新个人信息和统计数据
+function updateProfileData() {
+    const storedProfile = localStorage.getItem('profile_data');
+    if (storedProfile) {
+        const profile = JSON.parse(storedProfile);
+        
+        // 更新艺术家姓名
+        const artistNameElements = document.querySelectorAll('[data-i18n="artist-name"]');
+        artistNameElements.forEach(element => {
+            element.textContent = profile.name;
+        });
+        
+        // 更新关于页面的个人简介
+        const aboutIntro = document.querySelector('[data-i18n="about-intro"]');
+        if (aboutIntro) {
+            aboutIntro.textContent = profile.bio;
+        }
+        
+        // 更新联系邮箱
+        const contactEmailP = document.querySelector('.contact-item p');
+        if (contactEmailP && contactEmailP.textContent.includes('@')) {
+            contactEmailP.textContent = profile.email;
+        }
+        
+        // 更新统计数据的data-count属性
+        const statNumbers = document.querySelectorAll('.stat-number[data-count]');
+        statNumbers.forEach(element => {
+            const statItem = element.closest('.stat-item');
+            if (statItem) {
+                const statLabel = statItem.querySelector('.stat-label');
+                if (statLabel) {
+                    const labelText = statLabel.textContent || statLabel.getAttribute('data-i18n');
+                    if (labelText.includes('作品') || labelText.includes('artworks')) {
+                        element.dataset.count = profile.stats.artworks;
+                        element.textContent = profile.stats.artworks;
+                    } else if (labelText.includes('展览') || labelText.includes('exhibitions')) {
+                        element.dataset.count = profile.stats.exhibitions;
+                        element.textContent = profile.stats.exhibitions;
+                    } else if (labelText.includes('经验') || labelText.includes('experience')) {
+                        element.dataset.count = profile.stats.experience;
+                        element.textContent = profile.stats.experience;
+                    }
+                }
+            }
+        });
+    }
+}
+
+// 监听localStorage变化，实时更新页面内容
+function listenForDataUpdates() {
+    // 监听storage事件（跨标签页更新）
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'profile_data' || e.key === 'artworks_data' || e.key === 'i18n_data') {
+            // 重新加载数据并更新页面
+            setTimeout(() => {
+                updateProfileData();
+                reloadArtworks();
+                reloadI18nData();
+            }, 100);
+        }
+    });
+    
+    // 定时检查数据更新（同标签页更新）
+    let lastProfileUpdate = localStorage.getItem('profile_data');
+    let lastArtworksUpdate = localStorage.getItem('artworks_data');
+    let lastI18nUpdate = localStorage.getItem('i18n_data');
+    
+    setInterval(() => {
+        const currentProfile = localStorage.getItem('profile_data');
+        const currentArtworks = localStorage.getItem('artworks_data');
+        const currentI18n = localStorage.getItem('i18n_data');
+        
+        if (currentProfile !== lastProfileUpdate) {
+            lastProfileUpdate = currentProfile;
+            updateProfileData();
+        }
+        
+        if (currentArtworks !== lastArtworksUpdate) {
+            lastArtworksUpdate = currentArtworks;
+            reloadArtworks();
+        }
+        
+        if (currentI18n !== lastI18nUpdate) {
+            lastI18nUpdate = currentI18n;
+            reloadI18nData();
+        }
+    }, 1000); // 每秒检查一次
+}
+
+// 重新加载作品数据
+function reloadArtworks() {
+    // 更新全局作品数据
+    window.artworks = getArtworksData();
+    
+    // 重新渲染作品集
+    if (window.renderArtworks && typeof window.renderArtworks === 'function') {
+        window.renderArtworks(window.artworks);
+    } else {
+        // 如果renderArtworks不存在，重新初始化作品集
+        initGallery();
+    }
+}
+
+// 重新加载多语言数据
+function reloadI18nData() {
+    // 更新全局i18n数据
+    const newI18nData = getI18nData();
+    Object.assign(i18n, newI18nData);
+    
+    // 重新应用当前语言
+    if (typeof switchLanguage === 'function' && window.currentLanguage) {
+        switchLanguage(window.currentLanguage);
+    }
+}
+
 // 等待 DOM 加载完成
 document.addEventListener('DOMContentLoaded', function() {
     // 初始化所有功能
@@ -5,12 +120,16 @@ document.addEventListener('DOMContentLoaded', function() {
     initNavigation();
     initMobileMenu();
     initSmoothScroll();
+    updateProfileData(); // 更新个人信息
     initGallery();
     initModal();
     initCounters();
     initContactForm();
     initScrollEffects();
     initParallax();
+    
+    // 启动数据监听
+    listenForDataUpdates();
 });
 
 // 页面加载动画
@@ -122,81 +241,92 @@ function initSmoothScroll() {
     });
 }
 
-// 作品集数据
-const artworks = [
-    {
-        id: 1,
-        titleKey: "artwork-1-title",
-        descriptionKey: "artwork-1-desc",
-        category: "paintings",
-        image: "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=500&h=600&fit=crop",
-        details: {
-            medium: "油画",
-            size: "80cm × 100cm",
-            year: "2024"
-        }
-    },
-    {
-        id: 2,
-        titleKey: "artwork-2-title",
-        descriptionKey: "artwork-2-desc",
-        category: "digital",
-        image: "https://images.unsplash.com/photo-1549490349-8643362247b5?w=500&h=600&fit=crop",
-        details: {
-            medium: "数字艺术",
-            size: "3000px × 4000px",
-            year: "2024"
-        }
-    },
-    {
-        id: 3,
-        titleKey: "artwork-3-title",
-        descriptionKey: "artwork-3-desc",
-        category: "sketches",
-        image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500&h=600&fit=crop",
-        details: {
-            medium: "炭笔素描",
-            size: "40cm × 50cm",
-            year: "2023"
-        }
-    },
-    {
-        id: 4,
-        titleKey: "artwork-4-title",
-        descriptionKey: "artwork-4-desc",
-        category: "paintings",
-        image: "https://images.unsplash.com/photo-1578321272176-b7bbc0679853?w=500&h=600&fit=crop",
-        details: {
-            medium: "水彩",
-            size: "60cm × 80cm",
-            year: "2023"
-        }
-    },
-    {
-        id: 5,
-        titleKey: "artwork-5-title",
-        descriptionKey: "artwork-5-desc",
-        category: "digital",
-        image: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=500&h=600&fit=crop",
-        details: {
-            medium: "数字绘画",
-            size: "4000px × 3000px",
-            year: "2024"
-        }
-    },
-    {
-        id: 6,
-        titleKey: "artwork-6-title",
-        descriptionKey: "artwork-6-desc",
-        category: "sketches",
-        image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500&h=600&fit=crop",
-        details: {
-            medium: "铅笔素描",
-            size: "35cm × 45cm",
-            year: "2023"
-        }
+// 获取作品集数据（优先从localStorage获取）
+function getArtworksData() {
+    const storedArtworks = localStorage.getItem('artworks_data');
+    if (storedArtworks) {
+        return JSON.parse(storedArtworks);
     }
-];
+    
+    // 默认作品数据（作为后备）
+    return [
+        {
+            id: 1,
+            titleKey: "artwork-1-title",
+            descriptionKey: "artwork-1-desc",
+            category: "paintings",
+            image: "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=500&h=600&fit=crop",
+            details: {
+                medium: "油画",
+                size: "80cm × 100cm",
+                year: "2024"
+            }
+        },
+        {
+            id: 2,
+            titleKey: "artwork-2-title",
+            descriptionKey: "artwork-2-desc",
+            category: "digital",
+            image: "https://images.unsplash.com/photo-1549490349-8643362247b5?w=500&h=600&fit=crop",
+            details: {
+                medium: "数字艺术",
+                size: "3000px × 4000px",
+                year: "2024"
+            }
+        },
+        {
+            id: 3,
+            titleKey: "artwork-3-title",
+            descriptionKey: "artwork-3-desc",
+            category: "sketches",
+            image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500&h=600&fit=crop",
+            details: {
+                medium: "炭笔素描",
+                size: "40cm × 50cm",
+                year: "2023"
+            }
+        },
+        {
+            id: 4,
+            titleKey: "artwork-4-title",
+            descriptionKey: "artwork-4-desc",
+            category: "paintings",
+            image: "https://images.unsplash.com/photo-1578321272176-b7bbc0679853?w=500&h=600&fit=crop",
+            details: {
+                medium: "水彩",
+                size: "60cm × 80cm",
+                year: "2023"
+            }
+        },
+        {
+            id: 5,
+            titleKey: "artwork-5-title",
+            descriptionKey: "artwork-5-desc",
+            category: "digital",
+            image: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=500&h=600&fit=crop",
+            details: {
+                medium: "数字绘画",
+                size: "4000px × 3000px",
+                year: "2024"
+            }
+        },
+        {
+            id: 6,
+            titleKey: "artwork-6-title",
+            descriptionKey: "artwork-6-desc",
+            category: "sketches",
+            image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500&h=600&fit=crop",
+            details: {
+                medium: "铅笔素描",
+                size: "35cm × 45cm",
+                year: "2023"
+            }
+        }
+    ];
+}
+
+// 作品集数据
+const artworks = getArtworksData();
 
 // 初始化作品集
 function initGallery() {
