@@ -19,11 +19,23 @@ function updateProfileData() {
             aboutIntro.setAttribute('data-profile-updated', 'true'); // 标记已更新
         }
         
-        // 更新联系邮箱
+        // 更新联系邮箱（使用特定ID确保准确更新）
+        const emailElement = document.getElementById('contact-email-address');
+        if (emailElement) {
+            console.log('更新邮箱:', emailElement.textContent, ' -> ', profile.email); // 调试日志
+            emailElement.textContent = profile.email;
+            emailElement.setAttribute('data-profile-updated', 'true'); // 标记已更新
+        }
+        
+        // 备用方法：通过类名查找（以防ID不存在）
         const contactEmailElements = document.querySelectorAll('.contact-item p');
         contactEmailElements.forEach(element => {
-            if (element.textContent.includes('@') || element.textContent.includes('linshilin')) {
+            if (element.textContent.includes('@') || 
+                element.textContent.includes('linshilin') || 
+                element.textContent.includes('gmail.com')) {
+                console.log('备用更新邮箱:', element.textContent, ' -> ', profile.email); // 调试日志
                 element.textContent = profile.email;
+                element.setAttribute('data-profile-updated', 'true'); // 标记已更新
             }
         });
         
@@ -157,7 +169,20 @@ function reloadI18nData() {
 // 添加全局函数用于手动刷新数据
 window.refreshProfileData = function() {
     console.log('手动刷新个人信息数据'); // 调试日志
+    
+    // 强制更新个人信息
     updateProfileData();
+    
+    // 特别检查邮箱更新
+    const storedProfile = localStorage.getItem('profile_data');
+    if (storedProfile) {
+        const profile = JSON.parse(storedProfile);
+        const emailElement = document.getElementById('contact-email-address');
+        if (emailElement && profile.email) {
+            console.log('强制更新邮箱:', profile.email);
+            emailElement.textContent = profile.email;
+        }
+    }
     
     // 显示提示
     const notification = document.createElement('div');
@@ -176,7 +201,9 @@ window.refreshProfileData = function() {
     document.body.appendChild(notification);
     
     setTimeout(() => {
-        document.body.removeChild(notification);
+        if (document.body.contains(notification)) {
+            document.body.removeChild(notification);
+        }
     }, 2000);
 };
 
