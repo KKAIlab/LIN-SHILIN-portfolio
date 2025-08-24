@@ -526,7 +526,7 @@ function initGallery() {
     const galleryGrid = document.getElementById('gallery-grid');
     const filterBtns = document.querySelectorAll('.filter-btn');
     
-    // 渲染作品
+    // 渲染作品 - 增强版
     function renderArtworks(worksToShow = artworks) {
         galleryGrid.innerHTML = '';
         
@@ -539,25 +539,98 @@ function initGallery() {
             const title = getText(artwork.titleKey);
             const description = getText(artwork.descriptionKey);
             
+            // 创建增强的作品卡片
             artworkCard.innerHTML = `
-                <img src="${artwork.image}" alt="${title}" class="artwork-image" loading="lazy">
+                <div class="artwork-image-container">
+                    <img src="${artwork.image}" alt="${title}" class="artwork-image" loading="lazy">
+                    <div class="artwork-overlay">
+                        <div class="artwork-actions">
+                            <button class="action-btn view-btn" title="查看详情" aria-label="查看详情">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                            </button>
+                            <button class="action-btn fullscreen-btn" title="全屏查看" aria-label="全屏查看">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="artwork-meta">
+                            <span class="artwork-category">${getCategoryText(artwork.category)}</span>
+                            <span class="artwork-year">${artwork.details.year}</span>
+                        </div>
+                    </div>
+                    <div class="loading-placeholder"></div>
+                </div>
                 <div class="artwork-info">
                     <h3 class="artwork-title">${title}</h3>
                     <p class="artwork-description">${description}</p>
+                    <div class="artwork-details-preview">
+                        <span class="detail-item">${artwork.details.medium}</span>
+                        <span class="detail-separator">•</span>
+                        <span class="detail-item">${artwork.details.size}</span>
+                    </div>
                 </div>
             `;
             
-            // 添加点击事件
+            // 添加交互事件
+            const viewBtn = artworkCard.querySelector('.view-btn');
+            const fullscreenBtn = artworkCard.querySelector('.fullscreen-btn');
+            const image = artworkCard.querySelector('.artwork-image');
+            
+            // 查看详情
+            viewBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openModal(artwork);
+            });
+            
+            // 全屏查看
+            fullscreenBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openFullscreen(artwork);
+            });
+            
+            // 卡片点击事件
             artworkCard.addEventListener('click', () => openModal(artwork));
+            
+            // 图片加载事件
+            image.addEventListener('load', () => {
+                artworkCard.classList.add('image-loaded');
+            });
+            
+            // 图片错误处理
+            image.addEventListener('error', () => {
+                artworkCard.classList.add('image-error');
+                const placeholder = artworkCard.querySelector('.loading-placeholder');
+                placeholder.innerHTML = '<span>图片加载失败</span>';
+            });
+            
+            // 鼠标悬停效果增强
+            artworkCard.addEventListener('mouseenter', () => {
+                artworkCard.classList.add('hovered');
+            });
+            
+            artworkCard.addEventListener('mouseleave', () => {
+                artworkCard.classList.remove('hovered');
+            });
             
             galleryGrid.appendChild(artworkCard);
         });
         
-        // 添加入场动画
-        gsap.fromTo('.artwork-card', 
-            { opacity: 0, y: 30 },
-            { opacity: 1, y: 0, duration: 0.6, stagger: 0.1 }
-        );
+        // 使用Intersection Observer优化加载动画
+        observeArtworkCards();
+        
+        // 增强的入场动画
+        setTimeout(() => {
+            const cards = document.querySelectorAll('.artwork-card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.classList.add('animate-in');
+                }, index * 100);
+            });
+        }, 100);
     }
     
     // 过滤功能
@@ -828,3 +901,352 @@ document.addEventListener('scroll', throttle(() => {
         scrollIndicator.style.opacity = scrolled > 100 ? '0' : '1';
     }
 }, 16)); // 约60fps
+
+// ==================== 深色模式切换功能 ====================
+
+// 深色模式管理
+class ThemeManager {
+    constructor() {
+        this.currentTheme = 'light';
+        this.themeKey = 'preferred-theme';
+        this.init();
+    }
+    
+    init() {
+        // 从localStorage获取保存的主题，或者检测系统偏好
+        const savedTheme = localStorage.getItem(this.themeKey);
+        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        this.currentTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+        this.applyTheme(this.currentTheme);
+        
+        // 绑定切换按钮事件
+        this.bindEvents();
+        
+        // 监听系统主题变化
+        this.watchSystemTheme();
+    }
+    
+    bindEvents() {
+        const themeToggle = document.getElementById('theme-toggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => {
+                this.toggleTheme();
+            });
+        }
+    }
+    
+    toggleTheme() {
+        const newTheme = this.currentTheme === 'light' ? 'dark' : 'light';
+        this.applyTheme(newTheme);
+        this.saveTheme(newTheme);
+        
+        // 添加切换动画
+        this.addTransitionClass();
+        
+        console.log(`主题已切换到: ${newTheme}`);
+    }
+    
+    applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        this.currentTheme = theme;
+        
+        // 更新网站颜色meta标签
+        this.updateMetaThemeColor(theme);
+        
+        // 触发主题切换事件
+        this.dispatchThemeEvent(theme);
+    }
+    
+    saveTheme(theme) {
+        localStorage.setItem(this.themeKey, theme);
+    }
+    
+    addTransitionClass() {
+        document.documentElement.classList.add('theme-transition');
+        
+        // 移除过渡类（避免影响其他动画）
+        setTimeout(() => {
+            document.documentElement.classList.remove('theme-transition');
+        }, 300);
+    }
+    
+    updateMetaThemeColor(theme) {
+        const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+        if (metaThemeColor) {
+            metaThemeColor.setAttribute('content', 
+                theme === 'dark' ? '#1a1a1a' : '#ffffff'
+            );
+        } else {
+            // 如果不存在，创建meta标签
+            const meta = document.createElement('meta');
+            meta.name = 'theme-color';
+            meta.content = theme === 'dark' ? '#1a1a1a' : '#ffffff';
+            document.head.appendChild(meta);
+        }
+    }
+    
+    dispatchThemeEvent(theme) {
+        const event = new CustomEvent('themeChanged', {
+            detail: { theme: theme }
+        });
+        document.dispatchEvent(event);
+    }
+    
+    watchSystemTheme() {
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        mediaQuery.addEventListener('change', (e) => {
+            // 只在用户没有手动设置过主题时跟随系统
+            if (!localStorage.getItem(this.themeKey)) {
+                const newTheme = e.matches ? 'dark' : 'light';
+                this.applyTheme(newTheme);
+                console.log(`跟随系统主题变化: ${newTheme}`);
+            }
+        });
+    }
+    
+    getCurrentTheme() {
+        return this.currentTheme;
+    }
+    
+    // 重置为系统偏好
+    resetToSystemPreference() {
+        localStorage.removeItem(this.themeKey);
+        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const newTheme = systemPrefersDark ? 'dark' : 'light';
+        this.applyTheme(newTheme);
+    }
+}
+
+// 初始化深色模式
+const themeManager = new ThemeManager();
+
+// 监听主题切换事件，处理特殊元素
+document.addEventListener('themeChanged', (e) => {
+    const theme = e.detail.theme;
+    console.log(`主题切换事件触发: ${theme}`);
+    
+    // 这里可以添加特殊元素的主题切换处理
+    // 例如：更新图片、图标等
+});
+
+// 在CSS中添加主题切换过渡动画类
+const themeTransitionCSS = `
+.theme-transition,
+.theme-transition *,
+.theme-transition *:before,
+.theme-transition *:after {
+    transition: all 300ms !important;
+    transition-delay: 0 !important;
+}
+`;
+
+// 动态添加过渡样式
+const style = document.createElement('style');
+style.textContent = themeTransitionCSS;
+document.head.appendChild(style);
+
+// ==================== 作品展示增强功能 ====================
+
+// 获取分类文本
+function getCategoryText(category) {
+    const categoryMap = {
+        'paintings': window.currentLanguage === 'en' ? 'Painting' : 
+                    window.currentLanguage === 'ja' ? '絵画' : '绘画',
+        'digital': window.currentLanguage === 'en' ? 'Digital Art' : 
+                  window.currentLanguage === 'ja' ? 'デジタルアート' : '数字艺术',
+        'sketches': window.currentLanguage === 'en' ? 'Sketch' : 
+                   window.currentLanguage === 'ja' ? 'スケッチ' : '素描'
+    };
+    return categoryMap[category] || category;
+}
+
+// Intersection Observer 优化图片加载和动画
+function observeArtworkCards() {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const card = entry.target;
+                card.classList.add('in-viewport');
+                
+                // 懒加载图片优化
+                const img = card.querySelector('.artwork-image');
+                if (img && !img.src.startsWith('data:')) {
+                    // 图片已经有src，但可以添加加载状态管理
+                    img.classList.add('loading');
+                }
+            }
+        });
+    }, {
+        threshold: 0.1,
+        rootMargin: '50px'
+    });
+    
+    document.querySelectorAll('.artwork-card').forEach(card => {
+        observer.observe(card);
+    });
+}
+
+// 全屏查看功能
+function openFullscreen(artwork) {
+    // 创建全屏容器
+    const fullscreenModal = document.createElement('div');
+    fullscreenModal.className = 'fullscreen-modal';
+    fullscreenModal.innerHTML = `
+        <div class="fullscreen-content">
+            <button class="fullscreen-close" aria-label="关闭全屏">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+            <div class="fullscreen-image-container">
+                <img src="${artwork.image}" alt="${getText(artwork.titleKey)}" class="fullscreen-image">
+                <div class="image-loading">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+            <div class="fullscreen-info">
+                <h2>${getText(artwork.titleKey)}</h2>
+                <p>${getText(artwork.descriptionKey)}</p>
+                <div class="fullscreen-details">
+                    <span>${artwork.details.medium}</span>
+                    <span>•</span>
+                    <span>${artwork.details.size}</span>
+                    <span>•</span>
+                    <span>${artwork.details.year}</span>
+                </div>
+            </div>
+            <div class="fullscreen-controls">
+                <button class="control-btn zoom-in" title="放大">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="M21 21l-4.35-4.35"/>
+                        <line x1="11" y1="8" x2="11" y2="14"/>
+                        <line x1="8" y1="11" x2="14" y2="11"/>
+                    </svg>
+                </button>
+                <button class="control-btn zoom-out" title="缩小">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="M21 21l-4.35-4.35"/>
+                        <line x1="8" y1="11" x2="14" y2="11"/>
+                    </svg>
+                </button>
+                <button class="control-btn reset-zoom" title="重置">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <polyline points="1 4 1 10 7 10"/>
+                        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(fullscreenModal);
+    document.body.style.overflow = 'hidden';
+    
+    // 全屏控制事件
+    const closeBtn = fullscreenModal.querySelector('.fullscreen-close');
+    const image = fullscreenModal.querySelector('.fullscreen-image');
+    const zoomInBtn = fullscreenModal.querySelector('.zoom-in');
+    const zoomOutBtn = fullscreenModal.querySelector('.zoom-out');
+    const resetZoomBtn = fullscreenModal.querySelector('.reset-zoom');
+    
+    let currentZoom = 1;
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let translateX = 0;
+    let translateY = 0;
+    
+    // 关闭全屏
+    function closeFullscreen() {
+        fullscreenModal.classList.add('closing');
+        setTimeout(() => {
+            document.body.removeChild(fullscreenModal);
+            document.body.style.overflow = '';
+        }, 300);
+    }
+    
+    closeBtn.addEventListener('click', closeFullscreen);
+    
+    // 点击背景关闭
+    fullscreenModal.addEventListener('click', (e) => {
+        if (e.target === fullscreenModal) {
+            closeFullscreen();
+        }
+    });
+    
+    // ESC键关闭
+    const escHandler = (e) => {
+        if (e.key === 'Escape') {
+            closeFullscreen();
+            document.removeEventListener('keydown', escHandler);
+        }
+    };
+    document.addEventListener('keydown', escHandler);
+    
+    // 缩放控制
+    function updateImageTransform() {
+        image.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentZoom})`;
+    }
+    
+    zoomInBtn.addEventListener('click', () => {
+        currentZoom = Math.min(currentZoom * 1.2, 3);
+        updateImageTransform();
+    });
+    
+    zoomOutBtn.addEventListener('click', () => {
+        currentZoom = Math.max(currentZoom / 1.2, 0.5);
+        updateImageTransform();
+    });
+    
+    resetZoomBtn.addEventListener('click', () => {
+        currentZoom = 1;
+        translateX = 0;
+        translateY = 0;
+        updateImageTransform();
+    });
+    
+    // 鼠标拖拽
+    image.addEventListener('mousedown', (e) => {
+        if (currentZoom > 1) {
+            isDragging = true;
+            startX = e.clientX - translateX;
+            startY = e.clientY - translateY;
+            image.style.cursor = 'grabbing';
+        }
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+            translateX = e.clientX - startX;
+            translateY = e.clientY - startY;
+            updateImageTransform();
+        }
+    });
+    
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+        image.style.cursor = currentZoom > 1 ? 'grab' : 'default';
+    });
+    
+    // 鼠标滚轮缩放
+    fullscreenModal.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? 0.9 : 1.1;
+        currentZoom = Math.min(Math.max(currentZoom * delta, 0.5), 3);
+        updateImageTransform();
+    });
+    
+    // 图片加载完成后移除loading状态
+    image.addEventListener('load', () => {
+        fullscreenModal.querySelector('.image-loading').style.display = 'none';
+    });
+    
+    // 显示动画
+    setTimeout(() => {
+        fullscreenModal.classList.add('show');
+    }, 10);
+}

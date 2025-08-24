@@ -24,6 +24,11 @@ function getDefaultI18nData() {
         'nav-process': '创作',
         'nav-contact': '联系',
         
+        // 主题切换
+        'theme-toggle': '切换深色模式',
+        'theme-light': '浅色模式',
+        'theme-dark': '深色模式',
+        
         // 首页部分
         'hero-line1': '创造',
         'hero-line2': '独特',
@@ -102,6 +107,11 @@ function getDefaultI18nData() {
         'nav-process': 'Process',
         'nav-contact': 'Contact',
         
+        // Theme toggle
+        'theme-toggle': 'Toggle dark mode',
+        'theme-light': 'Light mode',
+        'theme-dark': 'Dark mode',
+        
         'hero-line1': 'CREATE',
         'hero-line2': 'UNIQUE',
         'hero-line3': 'ART',
@@ -171,6 +181,11 @@ function getDefaultI18nData() {
         'nav-gallery': '作品',
         'nav-process': '制作',
         'nav-contact': '連絡',
+        
+        // テーマ切り替え
+        'theme-toggle': 'ダークモード切り替え',
+        'theme-light': 'ライトモード',
+        'theme-dark': 'ダークモード',
         
         'hero-line1': '創造',
         'hero-line2': 'ユニーク',
@@ -288,6 +303,14 @@ function switchLanguage(lang) {
             } else {
                 element.textContent = i18n[lang][key];
             }
+        }
+    });
+    
+    // 更新所有带有 data-i18n-title 属性的元素的title
+    document.querySelectorAll('[data-i18n-title]').forEach(element => {
+        const key = element.getAttribute('data-i18n-title');
+        if (i18n[lang] && i18n[lang][key]) {
+            element.title = i18n[lang][key];
         }
     });
     
