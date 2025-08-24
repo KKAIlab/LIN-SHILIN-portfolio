@@ -1,13 +1,13 @@
-// 更新个人信息和统计数据
+// 更新个人信息和统计数据 - 与语言切换协同版本
 function updateProfileData() {
     const storedProfile = localStorage.getItem('profile_data');
     if (!storedProfile) {
-        console.log('没有找到profile_data，跳过更新');
+        console.log('📝 [个人信息] 没有找到profile_data，跳过更新');
         return;
     }
     
     const profile = JSON.parse(storedProfile);
-    console.log('开始更新个人信息:', profile); // 调试日志
+    console.log('📝 [个人信息] 开始更新个人信息:', profile);
     
     // 等待DOM完全加载
     if (document.readyState !== 'complete') {
@@ -17,42 +17,64 @@ function updateProfileData() {
     
     let updatedCount = 0;
     
-    // 强制更新艺术家姓名（不被i18n覆盖）
+    // 智能更新艺术家姓名（检查是否与默认翻译不同）
     const artistNameElements = document.querySelectorAll('[data-i18n="artist-name"]');
-    artistNameElements.forEach(element => {
-        const oldText = element.textContent;
-        element.textContent = profile.name;
-        element.setAttribute('data-profile-updated', 'true'); // 标记已更新
-        if (oldText !== profile.name) {
-            console.log('更新艺术家姓名:', oldText, ' -> ', profile.name);
-            updatedCount++;
+    artistNameElements.forEach((element, index) => {
+        // 检查当前语言的默认翻译
+        const currentLang = window.currentLanguage || 'zh';
+        const defaultTranslation = window.i18nData && window.i18nData[currentLang] && window.i18nData[currentLang]['artist-name'];
+        
+        // 只有当个人信息与默认翻译不同时才应用
+        if (profile.name && profile.name !== defaultTranslation) {
+            const oldText = element.textContent;
+            element.textContent = profile.name;
+            element.setAttribute('data-profile-updated', 'true');
+            if (oldText !== profile.name) {
+                console.log(`📝 [个人信息] [${index}] 应用自定义艺术家姓名:`, oldText, ' -> ', profile.name);
+                updatedCount++;
+            }
+        } else {
+            // 移除保护标记，允许使用翻译
+            element.removeAttribute('data-profile-updated');
+            console.log(`📝 [个人信息] [${index}] 艺术家姓名使用默认翻译，移除保护`);
         }
     });
     
-    // 强制更新关于页面的个人简介（不被i18n覆盖）
+    // 智能更新个人简介
     const aboutIntro = document.querySelector('[data-i18n="about-intro"]');
     if (aboutIntro) {
-        const oldBio = aboutIntro.textContent;
-        aboutIntro.textContent = profile.bio;
-        aboutIntro.setAttribute('data-profile-updated', 'true'); // 标记已更新
-        if (oldBio !== profile.bio) {
-            console.log('更新个人简介长度:', oldBio.length, ' -> ', profile.bio.length);
-            updatedCount++;
+        const currentLang = window.currentLanguage || 'zh';
+        const defaultTranslation = window.i18nData && window.i18nData[currentLang] && window.i18nData[currentLang]['about-intro'];
+        
+        if (profile.bio && profile.bio !== defaultTranslation) {
+            const oldBio = aboutIntro.textContent;
+            aboutIntro.textContent = profile.bio;
+            aboutIntro.setAttribute('data-profile-updated', 'true');
+            if (oldBio !== profile.bio) {
+                console.log('📝 [个人信息] 应用自定义个人简介长度:', oldBio.length, ' -> ', profile.bio.length);
+                updatedCount++;
+            }
+        } else {
+            aboutIntro.removeAttribute('data-profile-updated');
+            console.log('📝 [个人信息] 个人简介使用默认翻译，移除保护');
         }
     }
     
-    // 强制更新联系邮箱（使用特定ID确保准确更新）
+    // 智能更新联系邮箱
     const emailElement = document.getElementById('contact-email-address');
     if (emailElement) {
-        const oldEmail = emailElement.textContent;
-        emailElement.textContent = profile.email;
-        emailElement.setAttribute('data-profile-updated', 'true'); // 标记已更新
-        if (oldEmail !== profile.email) {
-            console.log('更新邮箱:', oldEmail, ' -> ', profile.email);
-            updatedCount++;
+        // 邮箱通常都是自定义的，所以直接应用
+        if (profile.email) {
+            const oldEmail = emailElement.textContent;
+            emailElement.textContent = profile.email;
+            emailElement.setAttribute('data-profile-updated', 'true');
+            if (oldEmail !== profile.email) {
+                console.log('📝 [个人信息] 应用自定义邮箱:', oldEmail, ' -> ', profile.email);
+                updatedCount++;
+            }
         }
     } else {
-        console.log('警告：未找到邮箱元素 contact-email-address');
+        console.log('⚠️ [个人信息] 未找到邮箱元素 contact-email-address');
     }
     
     // 备用方法：通过类名查找邮箱元素（以防ID不存在）
@@ -178,8 +200,8 @@ function listenForDataUpdates() {
             setTimeout(() => {
                 updateProfileData();
                 
-                // 再次确保个人信息应用成功
-                setTimeout(updateProfileData, 500);
+                // 再次确保个人信息应用成功（减少延迟，避免过度覆盖）
+                setTimeout(updateProfileData, 200);
             }, 300);
         }
     }, 1000); // 每秒检查一次
@@ -346,17 +368,11 @@ document.addEventListener('DOMContentLoaded', function() {
     initMobileMenu();
     initSmoothScroll();
     
-    // 确保个人信息在i18n之后更新，增加延迟到500ms
+    // 协调式个人信息更新（与语言系统协同工作）
     setTimeout(() => {
-        console.log('开始强制更新个人信息，确保覆盖i18n'); // 调试日志
-        updateProfileData(); // 更新个人信息
-        
-        // 再次延迟确保完全覆盖
-        setTimeout(() => {
-            console.log('二次个人信息更新，防止被覆盖'); // 调试日志
-            updateProfileData();
-        }, 200);
-    }, 500);
+        console.log('📝 [个人信息] 开始协调式个人信息更新'); 
+        updateProfileData(); // 首次个人信息更新
+    }, 600); // 确保在i18n初始化完成后运行
     
     initGallery();
     initModal();

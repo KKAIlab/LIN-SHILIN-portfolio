@@ -254,71 +254,111 @@ const i18n = getI18nData();
 // 当前语言
 let currentLanguage = 'zh';
 
-// 切换语言函数
+// 切换语言函数 - 彻底修复版
 function switchLanguage(lang) {
+    console.log('🌐 [语言切换] 开始切换语言到:', lang);
     currentLanguage = lang;
     window.currentLanguage = lang; // 将当前语言存储在全局变量中
     
+    // 检查多语言数据是否加载
+    if (!i18n || !i18n[lang]) {
+        console.error('❌ [语言切换] 多语言数据未加载或不支持语言:', lang);
+        console.log('可用语言:', Object.keys(i18n || {}));
+        return;
+    }
+    
+    console.log(`📊 [语言切换] ${lang}语言包含 ${Object.keys(i18n[lang]).length} 个翻译项`);
+    
+    // 首先清除所有profile保护标记，允许语言切换
+    console.log('🧹 [语言切换] 清除所有profile保护标记，允许语言切换');
+    document.querySelectorAll('[data-profile-updated="true"]').forEach((element, index) => {
+        element.removeAttribute('data-profile-updated');
+        console.log(`🧹 [${index}] 清除保护标记:`, element.getAttribute('data-i18n'));
+    });
+    
     // 更新所有带有 data-i18n 属性的元素
-    document.querySelectorAll('[data-i18n]').forEach(element => {
+    const elements = document.querySelectorAll('[data-i18n]');
+    console.log(`🔍 [语言切换] 找到 ${elements.length} 个需要翻译的元素`);
+    
+    let updatedCount = 0;
+    let skippedCount = 0;
+    
+    elements.forEach((element, index) => {
         const key = element.getAttribute('data-i18n');
+        const originalText = element.textContent || element.placeholder;
         
-        // 强化个人信息保护机制
-        if (element.getAttribute('data-profile-updated') === 'true') {
-            console.log('保护个人信息元素，跳过语言更新:', key, element.textContent);
-            return;
-        }
+        // 检查是否有自定义个人信息需要保留
+        let hasCustomProfile = false;
+        const storedProfile = localStorage.getItem('profile_data');
         
-        // 额外保护机制：检查是否为特定的个人信息元素
-        if (key === 'artist-name' || key === 'about-intro') {
-            const storedProfile = localStorage.getItem('profile_data');
-            if (storedProfile) {
-                const profile = JSON.parse(storedProfile);
-                if ((key === 'artist-name' && profile.name && element.textContent === profile.name) ||
-                    (key === 'about-intro' && profile.bio && element.textContent === profile.bio)) {
-                    console.log('检测到个人信息已应用，跳过语言更新:', key);
-                    element.setAttribute('data-profile-updated', 'true');
-                    return;
-                }
+        if (storedProfile && (key === 'artist-name' || key === 'about-intro')) {
+            const profile = JSON.parse(storedProfile);
+            // 只有当个人信息确实不同于默认翻译时才保护
+            if ((key === 'artist-name' && profile.name && profile.name !== i18n[lang][key]) ||
+                (key === 'about-intro' && profile.bio && profile.bio !== i18n[lang][key])) {
+                hasCustomProfile = true;
+                console.log(`🛡️ [${index}] 发现自定义个人信息，将在语言切换后重新应用:`, key);
             }
         }
         
-        // 邮箱元素特别保护
-        if (element.id === 'contact-email-address') {
-            const storedProfile = localStorage.getItem('profile_data');
-            if (storedProfile) {
-                const profile = JSON.parse(storedProfile);
-                if (profile.email && element.textContent === profile.email) {
-                    console.log('保护邮箱元素，跳过语言更新');
-                    element.setAttribute('data-profile-updated', 'true');
-                    return;
-                }
+        // 特殊处理邮箱
+        let hasCustomEmail = false;
+        if (element.id === 'contact-email-address' && storedProfile) {
+            const profile = JSON.parse(storedProfile);
+            if (profile.email && profile.email !== i18n[lang]['contact-email']) {
+                hasCustomEmail = true;
+                console.log(`🛡️ [${index}] 发现自定义邮箱，将在语言切换后重新应用`);
             }
         }
         
+        // 执行翻译更新
         if (i18n[lang] && i18n[lang][key]) {
-            // 检查元素类型
+            const newText = i18n[lang][key];
+            
+            // 检查元素类型并更新
             if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
-                element.placeholder = i18n[lang][key];
+                element.placeholder = newText;
+                console.log(`✅ [${index}] 更新占位符 ${key}: "${originalText}" → "${newText}"`);
             } else {
-                element.textContent = i18n[lang][key];
+                element.textContent = newText;
+                console.log(`✅ [${index}] 更新文本 ${key}: "${originalText}" → "${newText}"`);
             }
+            
+            // 标记需要重新应用个人信息的元素
+            if (hasCustomProfile || hasCustomEmail) {
+                element.setAttribute('data-needs-profile-reapply', 'true');
+            }
+            
+            updatedCount++;
+        } else {
+            console.warn(`⚠️ [${index}] 未找到翻译 ${key} (${lang})`);
         }
     });
     
+    // 统计信息
+    console.log(`📊 语言切换统计: 更新了 ${updatedCount} 个元素，跳过了 ${skippedCount} 个元素`);
+    
     // 更新所有带有 data-i18n-title 属性的元素的title
-    document.querySelectorAll('[data-i18n-title]').forEach(element => {
+    const titleElements = document.querySelectorAll('[data-i18n-title]');
+    console.log(`🏷️ 更新 ${titleElements.length} 个标题属性`);
+    
+    titleElements.forEach(element => {
         const key = element.getAttribute('data-i18n-title');
         if (i18n[lang] && i18n[lang][key]) {
             element.title = i18n[lang][key];
+            console.log(`✅ 更新标题 ${key}: "${i18n[lang][key]}"`);
         }
     });
     
     // 更新语言按钮状态
-    document.querySelectorAll('.lang-btn').forEach(btn => {
+    const langButtons = document.querySelectorAll('.lang-btn');
+    console.log(`🔘 更新 ${langButtons.length} 个语言按钮状态`);
+    
+    langButtons.forEach(btn => {
         btn.classList.remove('active');
         if (btn.getAttribute('data-lang') === lang) {
             btn.classList.add('active');
+            console.log(`✅ 激活语言按钮: ${lang}`);
         }
     });
     
@@ -328,16 +368,62 @@ function switchLanguage(lang) {
         en: 'LIN SHILIN Portfolio | Contemporary Artist',
         ja: 'リンシリン作品集 | 現代アーティスト'
     };
-    document.title = titles[lang];
+    
+    if (titles[lang]) {
+        document.title = titles[lang];
+        console.log(`📄 更新页面标题: ${titles[lang]}`);
+    }
     
     // 更新页面语言属性
     document.documentElement.lang = lang;
+    console.log(`🌍 设置页面语言属性: ${lang}`);
     
     // 保存语言偏好到本地存储
     localStorage.setItem('preferredLanguage', lang);
+    console.log(`💾 保存语言偏好: ${lang}`);
     
     // 更新作品数据语言
     updateArtworksLanguage(lang);
+    
+    // 延迟重新应用个人信息（确保语言切换完成后）
+    setTimeout(() => {
+        console.log('🔄 [语言切换] 开始重新应用个人信息');
+        const elementsNeedingReapply = document.querySelectorAll('[data-needs-profile-reapply="true"]');
+        
+        if (elementsNeedingReapply.length > 0 && storedProfile) {
+            const profile = JSON.parse(storedProfile);
+            
+            elementsNeedingReapply.forEach((element, index) => {
+                const key = element.getAttribute('data-i18n');
+                let appliedCustomData = false;
+                
+                if (key === 'artist-name' && profile.name) {
+                    element.textContent = profile.name;
+                    element.setAttribute('data-profile-updated', 'true');
+                    appliedCustomData = true;
+                    console.log(`🔄 [${index}] 重新应用自定义艺术家姓名: ${profile.name}`);
+                } else if (key === 'about-intro' && profile.bio) {
+                    element.textContent = profile.bio;
+                    element.setAttribute('data-profile-updated', 'true');
+                    appliedCustomData = true;
+                    console.log(`🔄 [${index}] 重新应用自定义个人简介 (长度: ${profile.bio.length})`);
+                } else if (element.id === 'contact-email-address' && profile.email) {
+                    element.textContent = profile.email;
+                    element.setAttribute('data-profile-updated', 'true');
+                    appliedCustomData = true;
+                    console.log(`🔄 [${index}] 重新应用自定义邮箱: ${profile.email}`);
+                }
+                
+                if (appliedCustomData) {
+                    element.removeAttribute('data-needs-profile-reapply');
+                }
+            });
+        }
+        
+        console.log(`🎉 [语言切换] 语言切换完成! 当前语言: ${lang}`);
+        console.log(`📊 [语言切换] 统计: 更新了 ${updatedCount} 个元素，跳过了 ${skippedCount} 个元素`);
+        console.log('🔍 如果页面文本没有变化，请检查控制台中的详细日志');
+    }, 100); // 短暂延迟确保DOM更新完成
 }
 
 // 更新作品数据语言
@@ -394,6 +480,40 @@ function initI18n() {
     
     // 暴露重新绑定函数给全局使用
     window.rebindLanguageEvents = bindLanguageEvents;
+    
+    // 添加额外的事件绑定确保语言按钮始终有效
+    const addFallbackHandlers = () => {
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            // 添加多重事件监听确保响应
+            const lang = btn.getAttribute('data-lang');
+            
+            // 移除旧的fallback处理器
+            if (btn._fallbackHandler) {
+                btn.removeEventListener('click', btn._fallbackHandler);
+                btn.removeEventListener('touchstart', btn._fallbackHandler);
+            }
+            
+            // 创建新的fallback处理器
+            btn._fallbackHandler = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🔄 [Fallback] 强制语言切换到:', lang);
+                switchLanguage(lang);
+            };
+            
+            // 绑定多种事件确保响应
+            btn.addEventListener('click', btn._fallbackHandler, { capture: true });
+            btn.addEventListener('touchstart', btn._fallbackHandler, { passive: false });
+            
+            console.log(`🔗 [事件绑定] 为语言按钮 ${lang} 添加强化事件监听器`);
+        });
+    };
+    
+    // 立即添加fallback处理器
+    addFallbackHandlers();
+    
+    // 暴露给全局使用
+    window.addFallbackLanguageHandlers = addFallbackHandlers;
 }
 
 // 页面加载完成后初始化

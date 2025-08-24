@@ -304,6 +304,8 @@ class AdminPanel {
     
     // 保存作品
     saveArtwork() {
+        console.log('🚀 开始保存作品...');
+        
         const form = document.getElementById('artwork-form');
         const formData = new FormData(form);
         
@@ -319,27 +321,76 @@ class AdminPanel {
         const size = document.getElementById('artwork-size').value.trim();
         const year = document.getElementById('artwork-year').value.trim();
         
+        console.log('📝 表单数据:', { titleZh, category, medium, size, year });
+        
         // 验证必填字段
         if (!titleZh || !category) {
+            console.error('❌ 必填字段验证失败');
             alert('请填写必填字段：中文标题和分类');
             return;
         }
         
-        // 获取图片
+        // 增强的图片获取逻辑
         let imageUrl = '';
-        const imagePreview = document.getElementById('image-preview').querySelector('img');
-        if (imagePreview) {
+        const imagePreviewContainer = document.getElementById('image-preview');
+        
+        console.log('🖼️ 检查图片预览容器:', imagePreviewContainer);
+        
+        // 方法1: 从预览容器中获取img标签
+        const imagePreview = imagePreviewContainer?.querySelector('img');
+        if (imagePreview && imagePreview.src) {
             imageUrl = imagePreview.src;
-        } else if (this.currentEditingArtwork) {
-            // 编辑模式下保留原图片
+            console.log('✅ 从预览获取图片URL:', imageUrl.substring(0, 100) + '...');
+        }
+        
+        // 方法2: 从文件输入获取 
+        if (!imageUrl) {
+            const fileInput = document.getElementById('artwork-image-input');
+            if (fileInput && fileInput.files && fileInput.files[0]) {
+                // 重新读取文件
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imageUrl = e.target.result;
+                    console.log('✅ 从文件输入获取图片URL');
+                    this.continueArtworkSave(titleZh, titleEn, titleJa, descZh, descEn, descJa, category, medium, size, year, imageUrl);
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+                return; // 异步处理，直接返回
+            }
+        }
+        
+        // 方法3: 编辑模式下保留原图片
+        if (!imageUrl && this.currentEditingArtwork) {
             const currentArtwork = dataManager.getArtworkById(this.currentEditingArtwork);
-            imageUrl = currentArtwork.image;
+            if (currentArtwork && currentArtwork.image) {
+                imageUrl = currentArtwork.image;
+                console.log('✅ 从现有作品获取图片URL');
+            }
+        }
+        
+        // 方法4: 检查预览容器的innerHTML
+        if (!imageUrl && imagePreviewContainer) {
+            const imgMatch = imagePreviewContainer.innerHTML.match(/src="([^"]+)"/);
+            if (imgMatch) {
+                imageUrl = imgMatch[1];
+                console.log('✅ 从HTML源码获取图片URL');
+            }
         }
         
         if (!imageUrl) {
-            alert('请选择作品图片');
+            console.error('❌ 无法获取图片URL');
+            console.log('预览容器内容:', imagePreviewContainer?.innerHTML);
+            alert('请选择作品图片。如果已上传图片但仍提示此错误，请重新上传图片。');
             return;
         }
+        
+        // 继续保存流程
+        this.continueArtworkSave(titleZh, titleEn, titleJa, descZh, descEn, descJa, category, medium, size, year, imageUrl);
+    }
+    
+    // 继续作品保存流程（分离出来处理异步情况）
+    continueArtworkSave(titleZh, titleEn, titleJa, descZh, descEn, descJa, category, medium, size, year, imageUrl) {
+        console.log('📦 继续保存流程，图片URL长度:', imageUrl.length);
         
         // 生成唯一的key
         const timestamp = Date.now();
@@ -349,6 +400,8 @@ class AdminPanel {
         const descKey = this.currentEditingArtwork ? 
             dataManager.getArtworkById(this.currentEditingArtwork).descriptionKey :
             `artwork-${timestamp}-desc`;
+        
+        console.log('🔑 生成键值:', { titleKey, descKey });
         
         // 更新多语言数据
         const i18nData = dataManager.getI18nData();
