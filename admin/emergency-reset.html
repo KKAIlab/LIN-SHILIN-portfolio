@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>紧急密码重置</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #2a2a2a;
+            padding: 30px;
+            border-radius: 10px;
+        }
+        .btn {
+            background: #e53e3e;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .btn:hover {
+            background: #c53030;
+        }
+        .btn.success {
+            background: #38a169;
+        }
+        .result {
+            background: #333;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-family: monospace;
+        }
+        .step {
+            margin: 20px 0;
+            padding: 15px;
+            background: #333;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚨 紧急密码重置工具</h1>
+        <p><strong>问题:</strong> 默认密码 admin123 无法登录</p>
+        <p><strong>解决方案:</strong> 立即重置localStorage中的密码哈希</p>
+
+        <div class="step">
+            <h3>方法1: 自动重置（推荐）</h3>
+            <button class="btn" onclick="autoReset()">立即重置密码</button>
+            <div id="autoResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="step">
+            <h3>方法2: 手动清除存储</h3>
+            <button class="btn" onclick="clearStorage()">清除所有认证数据</button>
+            <div id="clearResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="step">
+            <h3>方法3: 调试信息</h3>
+            <button class="btn" onclick="showDebugInfo()">显示调试信息</button>
+            <div id="debugResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="step">
+            <h3>方法4: 强制设置哈希值</h3>
+            <button class="btn" onclick="forceSetPassword()">强制设置正确哈希</button>
+            <div id="forceResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div style="margin-top: 30px; text-align: center;">
+            <a href="login.html" style="color: #667eea; text-decoration: none; font-size: 18px;">
+                → 返回登录页面
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // 手动实现哈希函数（与auth.js中保持一致）
+        function hashPassword(password) {
+            let hash = 0;
+            for (let i = 0; i < password.length; i++) {
+                const char = password.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // 转换为32位整数
+            }
+            return hash.toString(16);
+        }
+
+        function autoReset() {
+            try {
+                const defaultPassword = 'admin123';
+                const hashedPassword = hashPassword(defaultPassword);
+                
+                localStorage.setItem('admin_password', hashedPassword);
+                
+                const result = document.getElementById('autoResult');
+                result.innerHTML = `
+                    ✅ <strong>重置成功！</strong><br>
+                    默认密码: <strong>admin123</strong><br>
+                    哈希值: <code>${hashedPassword}</code><br>
+                    <br>
+                    <a href="login.html" style="color: #4CAF50;">现在可以登录了 →</a>
+                `;
+                result.style.display = 'block';
+                result.style.background = '#1a5d1a';
+                
+                console.log('密码重置成功，哈希值：', hashedPassword);
+            } catch (error) {
+                const result = document.getElementById('autoResult');
+                result.innerHTML = `❌ 重置失败: ${error.message}`;
+                result.style.display = 'block';
+                result.style.background = '#5d1a1a';
+            }
+        }
+
+        function clearStorage() {
+            try {
+                // 清除所有认证相关数据
+                localStorage.removeItem('admin_password');
+                localStorage.removeItem('admin_session');
+                
+                // 重新设置默认密码
+                const defaultPassword = 'admin123';
+                const hashedPassword = hashPassword(defaultPassword);
+                localStorage.setItem('admin_password', hashedPassword);
+                
+                const result = document.getElementById('clearResult');
+                result.innerHTML = `
+                    ✅ <strong>存储已清除并重置！</strong><br>
+                    默认密码: <strong>admin123</strong><br>
+                    新哈希值: <code>${hashedPassword}</code>
+                `;
+                result.style.display = 'block';
+                result.style.background = '#1a5d1a';
+            } catch (error) {
+                const result = document.getElementById('clearResult');
+                result.innerHTML = `❌ 清除失败: ${error.message}`;
+                result.style.display = 'block';
+                result.style.background = '#5d1a1a';
+            }
+        }
+
+        function showDebugInfo() {
+            const currentPassword = localStorage.getItem('admin_password');
+            const expectedHash = hashPassword('admin123');
+            
+            const result = document.getElementById('debugResult');
+            result.innerHTML = `
+                <strong>调试信息:</strong><br>
+                当前存储的哈希: <code>${currentPassword || '未设置'}</code><br>
+                admin123 的哈希: <code>${expectedHash}</code><br>
+                哈希是否匹配: <strong>${currentPassword === expectedHash ? '✅ 是' : '❌ 否'}</strong><br>
+                <br>
+                LocalStorage 内容:<br>
+                ${Object.keys(localStorage).map(key => 
+                    `${key}: ${localStorage.getItem(key)}`
+                ).join('<br>')}
+            `;
+            result.style.display = 'block';
+        }
+
+        function forceSetPassword() {
+            try {
+                // 强制设置正确的哈希值
+                const correctHash = hashPassword('admin123');
+                localStorage.setItem('admin_password', correctHash);
+                
+                // 验证设置是否成功
+                const verification = localStorage.getItem('admin_password');
+                
+                const result = document.getElementById('forceResult');
+                if (verification === correctHash) {
+                    result.innerHTML = `
+                        ✅ <strong>强制设置成功！</strong><br>
+                        密码: <strong>admin123</strong><br>
+                        哈希: <code>${correctHash}</code><br>
+                        验证: <code>${verification}</code><br>
+                        <br>
+                        <a href="login.html" style="color: #4CAF50; font-weight: bold;">立即登录 →</a>
+                    `;
+                    result.style.background = '#1a5d1a';
+                } else {
+                    result.innerHTML = `❌ 设置失败，验证不匹配`;
+                    result.style.background = '#5d1a1a';
+                }
+                result.style.display = 'block';
+            } catch (error) {
+                const result = document.getElementById('forceResult');
+                result.innerHTML = `❌ 强制设置失败: ${error.message}`;
+                result.style.display = 'block';
+                result.style.background = '#5d1a1a';
+            }
+        }
+
+        // 页面加载时显示当前状态
+        window.addEventListener('load', function() {
+            const currentHash = localStorage.getItem('admin_password');
+            const expectedHash = hashPassword('admin123');
+            
+            if (currentHash !== expectedHash) {
+                console.warn('密码哈希不匹配，需要重置');
+                console.log('当前哈希:', currentHash);
+                console.log('期望哈希:', expectedHash);
+            } else {
+                console.log('密码哈希正确');
+            }
+        });
+    </script>
+</body>
+</html>
