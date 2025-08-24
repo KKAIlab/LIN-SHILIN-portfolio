@@ -372,12 +372,28 @@ function initI18n() {
     switchLanguage(defaultLang);
     
     // 绑定语言切换事件
-    document.querySelectorAll('.lang-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const lang = this.getAttribute('data-lang');
-            switchLanguage(lang);
+    const bindLanguageEvents = () => {
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            // 移除之前的事件监听器（如果存在）
+            btn.removeEventListener('click', btn._langHandler);
+            
+            // 创建新的事件处理器
+            btn._langHandler = function() {
+                const lang = this.getAttribute('data-lang');
+                console.log('切换语言到:', lang);
+                switchLanguage(lang);
+            };
+            
+            // 绑定新的事件监听器
+            btn.addEventListener('click', btn._langHandler);
         });
-    });
+    };
+    
+    // 首次绑定
+    bindLanguageEvents();
+    
+    // 暴露重新绑定函数给全局使用
+    window.rebindLanguageEvents = bindLanguageEvents;
 }
 
 // 页面加载完成后初始化

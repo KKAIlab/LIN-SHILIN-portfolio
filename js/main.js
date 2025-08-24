@@ -117,7 +117,7 @@ function listenForDataUpdates() {
     // 监听storage事件（跨标签页更新）
     window.addEventListener('storage', function(e) {
         console.log('检测到localStorage变化:', e.key); // 调试日志
-        if (e.key === 'profile_data' || e.key === 'artworks_data' || e.key === 'i18n_data') {
+        if (e.key === 'profile_data' || e.key === 'artworks_data' || e.key === 'i18n_data' || e.key === 'frontend_sync_trigger') {
             // 重新加载数据并更新页面
             setTimeout(() => {
                 console.log('执行跨标签页数据更新'); // 调试日志

@@ -550,12 +550,33 @@ class AdminPanel {
         this.syncDataToFrontend();
     }
     
-    // 同步数据到前台（更新主站的JavaScript文件）
+    // 同步数据到前台（触发前台数据更新）
     syncDataToFrontend() {
-        // 这里可以实现将localStorage数据同步到main.js和i18n.js的逻辑
-        // 由于我们使用localStorage，前台JavaScript需要修改为从localStorage读取数据
+        console.log('触发前台数据同步...');
         
-        this.showNotification('数据已同步到前台网站！', 'success');
+        // 触发storage事件，通知前台页面数据已更新
+        // 这将让前台页面的storage事件监听器响应
+        try {
+            // 通过修改一个临时键来触发storage事件
+            const timestamp = Date.now();
+            localStorage.setItem('frontend_sync_trigger', timestamp);
+            localStorage.removeItem('frontend_sync_trigger');
+            
+            // 也可以通过自定义事件的方式通知
+            if (window.parent && window.parent !== window) {
+                // 如果是iframe中运行，通知父窗口
+                window.parent.postMessage({
+                    type: 'DATA_UPDATED',
+                    timestamp: timestamp
+                }, '*');
+            }
+            
+            this.showNotification('数据已同步到前台网站！', 'success');
+            console.log('前台数据同步完成');
+        } catch (error) {
+            console.error('同步数据到前台时出错:', error);
+            this.showNotification('数据同步失败，请刷新前台页面', 'error');
+        }
     }
     
     // 登出

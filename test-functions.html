@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>功能测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .test-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .test-section h2 {
+            color: #333;
+            border-bottom: 2px solid #007acc;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .test-button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        
+        .test-button:hover {
+            background: #005a9e;
+        }
+        
+        .test-result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+        
+        .lang-buttons {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .lang-btn {
+            padding: 8px 16px;
+            background: transparent;
+            border: 2px solid #007acc;
+            color: #007acc;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .lang-btn:hover {
+            background: #007acc;
+            color: white;
+        }
+        
+        .lang-btn.active {
+            background: #28a745;
+            border-color: #28a745;
+            color: white;
+        }
+        
+        .data-display {
+            max-height: 300px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 艺术家网站功能测试页面</h1>
+    
+    <!-- 多语言测试 -->
+    <div class="test-section">
+        <h2>🌐 多语言切换测试</h2>
+        <div class="lang-buttons">
+            <button class="lang-btn" data-lang="zh" onclick="testLanguageSwitch('zh')">中文</button>
+            <button class="lang-btn" data-lang="en" onclick="testLanguageSwitch('en')">English</button>
+            <button class="lang-btn" data-lang="ja" onclick="testLanguageSwitch('ja')">日本語</button>
+        </div>
+        <div>
+            <p>测试文本：<span data-i18n="nav-home" id="test-text">首页</span></p>
+            <p>艺术家姓名：<span data-i18n="artist-name" id="test-artist-name">林士林</span></p>
+        </div>
+        <button class="test-button" onclick="testI18nData()">检查多语言数据</button>
+        <div id="i18n-result" class="test-result"></div>
+    </div>
+    
+    <!-- 数据管理测试 -->
+    <div class="test-section">
+        <h2>📊 数据管理测试</h2>
+        <button class="test-button" onclick="testLocalStorageData()">检查本地存储数据</button>
+        <button class="test-button" onclick="testArtworksData()">检查作品数据</button>
+        <button class="test-button" onclick="testProfileData()">检查个人信息</button>
+        <button class="test-button" onclick="clearAllData()">清空所有数据</button>
+        <div id="data-result" class="test-result"></div>
+    </div>
+    
+    <!-- 作品管理测试 -->
+    <div class="test-section">
+        <h2>🖼️ 作品管理测试</h2>
+        <button class="test-button" onclick="addTestArtwork()">添加测试作品</button>
+        <button class="test-button" onclick="updateTestArtwork()">更新测试作品</button>
+        <button class="test-button" onclick="deleteTestArtwork()">删除测试作品</button>
+        <button class="test-button" onclick="displayArtworks()">显示所有作品</button>
+        <div id="artwork-result" class="test-result"></div>
+    </div>
+    
+    <!-- 数据同步测试 -->
+    <div class="test-section">
+        <h2>🔄 数据同步测试</h2>
+        <button class="test-button" onclick="testDataSync()">模拟后台数据更新</button>
+        <button class="test-button" onclick="startSyncMonitor()">开始同步监控</button>
+        <button class="test-button" onclick="stopSyncMonitor()">停止同步监控</button>
+        <div id="sync-result" class="test-result"></div>
+    </div>
+    
+    <!-- 当前数据查看 -->
+    <div class="test-section">
+        <h2>📋 当前数据状态</h2>
+        <div class="data-display" id="current-data"></div>
+        <button class="test-button" onclick="refreshDataDisplay()">刷新显示</button>
+    </div>
+
+    <script>
+        let syncMonitorInterval = null;
+        
+        // 多语言测试函数
+        function testLanguageSwitch(lang) {
+            log('i18n-result', `切换到语言: ${lang}`, 'info');
+            
+            // 更新按钮状态
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('data-lang') === lang) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // 检查是否有switchLanguage函数
+            if (typeof switchLanguage === 'function') {
+                try {
+                    switchLanguage(lang);
+                    log('i18n-result', `语言切换成功！`, 'success');
+                    
+                    // 检查文本是否更新
+                    setTimeout(() => {
+                        const testText = document.getElementById('test-text').textContent;
+                        const artistName = document.getElementById('test-artist-name').textContent;
+                        log('i18n-result', `当前显示文本: "${testText}", 艺术家名称: "${artistName}"`, 'info');
+                    }, 100);
+                } catch (error) {
+                    log('i18n-result', `语言切换失败: ${error.message}`, 'error');
+                }
+            } else {
+                log('i18n-result', '错误：找不到 switchLanguage 函数，需要加载 i18n.js', 'error');
+            }
+        }
+        
+        function testI18nData() {
+            const result = [];
+            result.push('=== 多语言数据检查 ===');
+            
+            // 检查localStorage中的i18n数据
+            const storedI18n = localStorage.getItem('i18n_data');
+            if (storedI18n) {
+                try {
+                    const i18nData = JSON.parse(storedI18n);
+                    result.push(`✓ localStorage中发现多语言数据`);
+                    result.push(`支持的语言: ${Object.keys(i18nData).join(', ')}`);
+                    
+                    Object.keys(i18nData).forEach(lang => {
+                        const keyCount = Object.keys(i18nData[lang]).length;
+                        result.push(`  ${lang}: ${keyCount} 个翻译键`);
+                    });
+                } catch (error) {
+                    result.push(`✗ localStorage中的i18n数据格式错误: ${error.message}`);
+                }
+            } else {
+                result.push('⚠ localStorage中未找到多语言数据');
+            }
+            
+            // 检查全局i18n变量
+            if (typeof i18n !== 'undefined') {
+                result.push(`✓ 全局i18n变量存在`);
+                result.push(`当前语言: ${typeof currentLanguage !== 'undefined' ? currentLanguage : '未定义'}`);
+            } else {
+                result.push('✗ 全局i18n变量不存在');
+            }
+            
+            document.getElementById('i18n-result').innerHTML = result.join('\\n');
+        }
+        
+        // 数据管理测试函数
+        function testLocalStorageData() {
+            const result = [];
+            result.push('=== 本地存储数据检查 ===');
+            
+            const keys = ['profile_data', 'artworks_data', 'i18n_data', 'site_config'];
+            keys.forEach(key => {
+                const data = localStorage.getItem(key);
+                if (data) {
+                    try {
+                        const parsed = JSON.parse(data);
+                        result.push(`✓ ${key}: ${JSON.stringify(parsed).length} 字节`);
+                    } catch (error) {
+                        result.push(`✗ ${key}: 数据格式错误`);
+                    }
+                } else {
+                    result.push(`⚠ ${key}: 数据不存在`);
+                }
+            });
+            
+            log('data-result', result.join('\\n'));
+        }
+        
+        function testArtworksData() {
+            const artworksData = localStorage.getItem('artworks_data');
+            if (artworksData) {
+                try {
+                    const artworks = JSON.parse(artworksData);
+                    log('data-result', `作品数据: 共 ${artworks.length} 件作品\\n${JSON.stringify(artworks, null, 2)}`, 'info');
+                } catch (error) {
+                    log('data-result', `作品数据解析错误: ${error.message}`, 'error');
+                }
+            } else {
+                log('data-result', '未找到作品数据', 'error');
+            }
+        }
+        
+        function testProfileData() {
+            const profileData = localStorage.getItem('profile_data');
+            if (profileData) {
+                try {
+                    const profile = JSON.parse(profileData);
+                    log('data-result', `个人信息数据:\\n${JSON.stringify(profile, null, 2)}`, 'info');
+                } catch (error) {
+                    log('data-result', `个人信息解析错误: ${error.message}`, 'error');
+                }
+            } else {
+                log('data-result', '未找到个人信息数据', 'error');
+            }
+        }
+        
+        function clearAllData() {
+            if (confirm('确定要清空所有本地存储数据吗？这将删除所有个人信息和作品数据！')) {
+                localStorage.clear();
+                log('data-result', '所有本地存储数据已清空', 'success');
+                refreshDataDisplay();
+            }
+        }
+        
+        // 作品管理测试函数
+        function addTestArtwork() {
+            const testArtwork = {
+                id: Date.now(),
+                titleKey: `test-artwork-${Date.now()}`,
+                descriptionKey: `test-desc-${Date.now()}`,
+                category: "digital",
+                image: "https://via.placeholder.com/400x300/007acc/white?text=Test+Artwork",
+                details: {
+                    medium: "数字艺术",
+                    size: "1920×1080",
+                    year: "2025"
+                }
+            };
+            
+            // 获取现有作品数据
+            let artworks = [];
+            const existingData = localStorage.getItem('artworks_data');
+            if (existingData) {
+                artworks = JSON.parse(existingData);
+            }
+            
+            artworks.push(testArtwork);
+            localStorage.setItem('artworks_data', JSON.stringify(artworks));
+            
+            // 添加多语言数据
+            let i18nData = {};
+            const existingI18n = localStorage.getItem('i18n_data');
+            if (existingI18n) {
+                i18nData = JSON.parse(existingI18n);
+            } else {
+                i18nData = { zh: {}, en: {}, ja: {} };
+            }
+            
+            i18nData.zh[testArtwork.titleKey] = `测试作品 ${testArtwork.id}`;
+            i18nData.en[testArtwork.titleKey] = `Test Artwork ${testArtwork.id}`;
+            i18nData.ja[testArtwork.titleKey] = `テスト作品 ${testArtwork.id}`;
+            
+            i18nData.zh[testArtwork.descriptionKey] = `这是一个测试作品的描述`;
+            i18nData.en[testArtwork.descriptionKey] = `This is a test artwork description`;
+            i18nData.ja[testArtwork.descriptionKey] = `これはテスト作品の説明です`;
+            
+            localStorage.setItem('i18n_data', JSON.stringify(i18nData));
+            
+            log('artwork-result', `测试作品添加成功！ID: ${testArtwork.id}`, 'success');
+        }
+        
+        function updateTestArtwork() {
+            let artworks = [];
+            const existingData = localStorage.getItem('artworks_data');
+            if (existingData) {
+                artworks = JSON.parse(existingData);
+            }
+            
+            if (artworks.length === 0) {
+                log('artwork-result', '没有作品可以更新', 'error');
+                return;
+            }
+            
+            // 更新第一个作品
+            artworks[0].details.year = "2025 (已更新)";
+            localStorage.setItem('artworks_data', JSON.stringify(artworks));
+            
+            log('artwork-result', `作品更新成功！更新了作品 ID: ${artworks[0].id}`, 'success');
+        }
+        
+        function deleteTestArtwork() {
+            let artworks = [];
+            const existingData = localStorage.getItem('artworks_data');
+            if (existingData) {
+                artworks = JSON.parse(existingData);
+            }
+            
+            if (artworks.length === 0) {
+                log('artwork-result', '没有作品可以删除', 'error');
+                return;
+            }
+            
+            const deletedArtwork = artworks.pop();
+            localStorage.setItem('artworks_data', JSON.stringify(artworks));
+            
+            log('artwork-result', `作品删除成功！删除了作品 ID: ${deletedArtwork.id}`, 'success');
+        }
+        
+        function displayArtworks() {
+            const artworksData = localStorage.getItem('artworks_data');
+            if (artworksData) {
+                try {
+                    const artworks = JSON.parse(artworksData);
+                    const result = artworks.map(artwork => 
+                        `ID: ${artwork.id}, 标题键: ${artwork.titleKey}, 分类: ${artwork.category}`
+                    ).join('\\n');
+                    log('artwork-result', `当前作品列表 (${artworks.length} 件):\\n${result}`, 'info');
+                } catch (error) {
+                    log('artwork-result', `显示作品时出错: ${error.message}`, 'error');
+                }
+            } else {
+                log('artwork-result', '没有找到作品数据', 'error');
+            }
+        }
+        
+        // 数据同步测试
+        function testDataSync() {
+            log('sync-result', '模拟后台数据更新...', 'info');
+            
+            // 模拟修改数据
+            const timestamp = Date.now();
+            localStorage.setItem('test_sync_data', timestamp);
+            
+            // 触发storage事件
+            window.dispatchEvent(new StorageEvent('storage', {
+                key: 'artworks_data',
+                newValue: localStorage.getItem('artworks_data'),
+                oldValue: null,
+                storageArea: localStorage,
+                url: window.location.href
+            }));
+            
+            log('sync-result', `数据同步触发完成，时间戳: ${timestamp}`, 'success');
+        }
+        
+        function startSyncMonitor() {
+            if (syncMonitorInterval) {
+                log('sync-result', '同步监控已经在运行中', 'error');
+                return;
+            }
+            
+            log('sync-result', '开始监控数据同步...', 'info');
+            
+            syncMonitorInterval = setInterval(() => {
+                const now = new Date().toLocaleTimeString();
+                log('sync-result', `[${now}] 监控中... 检查localStorage变化`, 'info');
+            }, 2000);
+        }
+        
+        function stopSyncMonitor() {
+            if (syncMonitorInterval) {
+                clearInterval(syncMonitorInterval);
+                syncMonitorInterval = null;
+                log('sync-result', '已停止同步监控', 'success');
+            } else {
+                log('sync-result', '同步监控未运行', 'error');
+            }
+        }
+        
+        // 数据显示
+        function refreshDataDisplay() {
+            const dataDisplay = document.getElementById('current-data');
+            const currentData = {
+                profile_data: getLocalStorageData('profile_data'),
+                artworks_data: getLocalStorageData('artworks_data'),
+                i18n_data: getLocalStorageData('i18n_data'),
+                site_config: getLocalStorageData('site_config')
+            };
+            
+            dataDisplay.textContent = JSON.stringify(currentData, null, 2);
+        }
+        
+        function getLocalStorageData(key) {
+            const data = localStorage.getItem(key);
+            if (data) {
+                try {
+                    return JSON.parse(data);
+                } catch (error) {
+                    return `数据解析错误: ${error.message}`;
+                }
+            }
+            return null;
+        }
+        
+        // 通用日志函数
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const colorClass = type === 'success' ? 'success' : type === 'error' ? 'error' : 'info';
+            element.innerHTML = `<span class="${colorClass}">[${timestamp}] ${message}</span>`;
+        }
+        
+        // 监听localStorage变化
+        window.addEventListener('storage', function(e) {
+            log('sync-result', `检测到localStorage变化: ${e.key}`, 'success');
+            refreshDataDisplay();
+        });
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshDataDisplay();
+        });
+    </script>
+    
+    <!-- 加载原有的JavaScript文件来测试功能 -->
+    <script src="./js/i18n.js"></script>
+    <script src="./js/main.js"></script>
+</body>
+</html>
