@@ -13,6 +13,17 @@
         <div class="sidebar-header">
             <h2>后台管理</h2>
             <span class="admin-badge">林士林</span>
+            <div class="admin-theme-switcher">
+                <button class="admin-theme-btn" id="admin-theme-toggle" title="切换深色模式" aria-label="切换深色模式">
+                    <svg class="theme-icon sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <circle cx="12" cy="12" r="5"/>
+                        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                    </svg>
+                    <svg class="theme-icon moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                </button>
+            </div>
         </div>
         
         <nav class="sidebar-nav">
@@ -98,20 +109,109 @@
         <!-- 作品管理页面 -->
         <section id="artworks-section" class="content-section">
             <div class="section-header">
-                <button id="add-artwork-btn" class="btn btn-primary">添加新作品</button>
-                <div class="search-filter">
-                    <input type="text" id="artwork-search" placeholder="搜索作品...">
+                <div class="header-actions">
+                    <button id="add-artwork-btn" class="btn btn-primary">
+                        <span class="btn-icon">+</span>
+                        添加新作品
+                    </button>
+                    <button id="batch-upload-btn" class="btn btn-secondary">
+                        <span class="btn-icon">📁</span>
+                        批量上传
+                    </button>
+                    <div class="batch-actions" id="batch-actions" style="display: none;">
+                        <button id="select-all-btn" class="btn btn-outline">全选</button>
+                        <button id="delete-selected-btn" class="btn btn-danger">删除选中</button>
+                        <button id="export-selected-btn" class="btn btn-outline">导出选中</button>
+                    </div>
+                </div>
+                
+                <div class="search-filter-enhanced">
+                    <div class="search-container">
+                        <input type="text" id="artwork-search" placeholder="搜索作品标题、描述或标签...">
+                        <span class="search-icon">🔍</span>
+                    </div>
                     <select id="artwork-filter">
                         <option value="">所有分类</option>
                         <option value="paintings">绘画</option>
                         <option value="digital">数字艺术</option>
                         <option value="sketches">素描</option>
                     </select>
+                    <select id="sort-filter">
+                        <option value="newest">最新创建</option>
+                        <option value="oldest">最早创建</option>
+                        <option value="title-asc">标题 A-Z</option>
+                        <option value="title-desc">标题 Z-A</option>
+                        <option value="year-desc">年份(新到旧)</option>
+                        <option value="year-asc">年份(旧到新)</option>
+                    </select>
+                    <div class="view-toggle">
+                        <button id="grid-view-btn" class="view-btn active" title="网格视图">⊞</button>
+                        <button id="list-view-btn" class="view-btn" title="列表视图">☰</button>
+                    </div>
                 </div>
             </div>
             
-            <div id="artworks-grid" class="artworks-grid">
-                <!-- 作品卡片将通过 JavaScript 动态生成 -->
+            <!-- 拖拽上传区域 -->
+            <div id="drag-upload-area" class="drag-upload-area" style="display: none;">
+                <div class="drag-upload-content">
+                    <span class="upload-icon">📁</span>
+                    <h3>拖拽图片到此处上传</h3>
+                    <p>支持 JPG, PNG, GIF 格式，单个文件最大 10MB</p>
+                    <button type="button" class="btn btn-outline" id="browse-files-btn">或点击浏览文件</button>
+                    <input type="file" id="file-input" multiple accept="image/*" style="display: none;">
+                </div>
+            </div>
+            
+            <!-- 作品统计信息 -->
+            <div class="artworks-stats">
+                <span id="total-artworks-count">共 0 件作品</span>
+                <span id="filtered-count" style="display: none;">显示 0 件</span>
+                <span id="selected-count" style="display: none;">已选中 0 件</span>
+            </div>
+            
+            <div id="artworks-container" class="artworks-container">
+                <div id="artworks-grid" class="artworks-grid view-grid">
+                    <!-- 作品卡片将通过 JavaScript 动态生成 -->
+                </div>
+                
+                <!-- 列表视图 -->
+                <div id="artworks-list" class="artworks-list view-list" style="display: none;">
+                    <table class="artworks-table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="select-all-checkbox"></th>
+                                <th>预览</th>
+                                <th>标题</th>
+                                <th>分类</th>
+                                <th>尺寸</th>
+                                <th>年份</th>
+                                <th>创建时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="artworks-table-body">
+                            <!-- 表格行将通过 JavaScript 动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- 分页控制 -->
+            <div class="pagination-controls" id="pagination-controls" style="display: none;">
+                <div class="pagination-info">
+                    <span>每页显示：</span>
+                    <select id="items-per-page">
+                        <option value="12">12</option>
+                        <option value="24" selected>24</option>
+                        <option value="48">48</option>
+                        <option value="all">全部</option>
+                    </select>
+                </div>
+                <div class="pagination-buttons">
+                    <button class="pagination-btn" id="prev-page-btn" disabled>上一页</button>
+                    <div class="page-numbers" id="page-numbers"></div>
+                    <button class="pagination-btn" id="next-page-btn">下一页</button>
+                </div>
             </div>
         </section>
         
@@ -269,6 +369,7 @@
         <p>处理中...</p>
     </div>
     
+    <script src="./js/theme-manager.js"></script>
     <script src="./js/auth.js"></script>
     <script src="./js/data-manager.js"></script>
     <script src="./js/admin.js"></script>
