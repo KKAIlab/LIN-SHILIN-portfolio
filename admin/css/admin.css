@@ -168,6 +168,28 @@ body {
     text-decoration: none;
 }
 
+.login-footer a:hover {
+    text-decoration: underline;
+}
+
+.reset-password-btn {
+    background: none;
+    border: none;
+    color: #e53e3e;
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 14px;
+    margin: 8px 0;
+    padding: 4px 0;
+    display: block;
+    transition: color 0.2s ease;
+    font-family: inherit;
+}
+
+.reset-password-btn:hover {
+    color: #c53030;
+}
+
 /* 后台管理页面样式 */
 .admin-page {
     display: flex;

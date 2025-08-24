@@ -33,6 +33,12 @@ class AuthManager {
         localStorage.setItem(this.passwordKey, hashedPassword);
     }
     
+    // 重置密码为默认值
+    resetPassword() {
+        this.setPassword(this.defaultPassword);
+        console.log('密码已重置为默认密码: admin123');
+    }
+    
     // 验证密码
     verifyPassword(password) {
         const storedPassword = localStorage.getItem(this.passwordKey);

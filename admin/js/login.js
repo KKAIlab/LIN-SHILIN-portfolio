@@ -74,6 +74,25 @@ document.addEventListener('DOMContentLoaded', function() {
         errorMessage.style.animation = '';
     }
     
+    // 重置密码功能
+    const resetPasswordBtn = document.getElementById('reset-password-btn');
+    if (resetPasswordBtn) {
+        resetPasswordBtn.addEventListener('click', function() {
+            if (confirm('确定要重置密码为默认密码 "admin123" 吗？')) {
+                // 创建认证管理器实例并重置密码
+                const authManager = new AuthManager();
+                authManager.resetPassword();
+                
+                // 显示成功消息
+                showSuccess('密码已重置为默认密码：admin123');
+                
+                // 清空输入框并聚焦
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+        });
+    }
+    
     // 自动聚焦密码输入框
     passwordInput.focus();
 });
