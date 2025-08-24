@@ -552,30 +552,62 @@ class AdminPanel {
     
     // 同步数据到前台（触发前台数据更新）
     syncDataToFrontend() {
-        console.log('触发前台数据同步...');
+        console.log('🔄 触发前台数据同步...');
         
-        // 触发storage事件，通知前台页面数据已更新
-        // 这将让前台页面的storage事件监听器响应
         try {
-            // 通过修改一个临时键来触发storage事件
             const timestamp = Date.now();
-            localStorage.setItem('frontend_sync_trigger', timestamp);
-            localStorage.removeItem('frontend_sync_trigger');
             
-            // 也可以通过自定义事件的方式通知
-            if (window.parent && window.parent !== window) {
-                // 如果是iframe中运行，通知父窗口
-                window.parent.postMessage({
+            // 方法1: 触发跨标签页storage事件
+            localStorage.setItem('sync_timestamp', timestamp.toString());
+            
+            // 方法2: 使用BroadcastChannel API（现代浏览器）
+            if ('BroadcastChannel' in window) {
+                const channel = new BroadcastChannel('artwork_updates');
+                channel.postMessage({
                     type: 'DATA_UPDATED',
-                    timestamp: timestamp
-                }, '*');
+                    timestamp: timestamp,
+                    keys: ['artworks_data', 'i18n_data', 'profile_data']
+                });
+                console.log('📡 通过BroadcastChannel发送数据更新通知');
             }
             
-            this.showNotification('数据已同步到前台网站！', 'success');
-            console.log('前台数据同步完成');
+            // 方法3: 写入特殊标记文件触发更新
+            localStorage.setItem('last_admin_update', JSON.stringify({
+                timestamp: timestamp,
+                type: 'artwork_change',
+                action: 'sync_frontend'
+            }));
+            
+            // 方法4: 如果是在iframe或popup中，使用postMessage
+            if (window.opener) {
+                window.opener.postMessage({
+                    type: 'ARTWORK_DATA_UPDATED',
+                    timestamp: timestamp
+                }, '*');
+                console.log('📤 通过postMessage通知父窗口');
+            }
+            
+            // 方法5: 强制触发storage事件（hack方法）
+            const storageEvent = new StorageEvent('storage', {
+                key: 'artworks_data',
+                newValue: localStorage.getItem('artworks_data'),
+                oldValue: null,
+                storageArea: localStorage,
+                url: window.location.href
+            });
+            
+            // 延迟触发，让其他页面有时间监听
+            setTimeout(() => {
+                window.dispatchEvent(storageEvent);
+                console.log('🚀 手动触发storage事件');
+            }, 100);
+            
+            this.showNotification('✅ 数据已同步到前台网站！', 'success');
+            console.log('✅ 前台数据同步完成 - 使用多重通知机制');
+            
         } catch (error) {
-            console.error('同步数据到前台时出错:', error);
-            this.showNotification('数据同步失败，请刷新前台页面', 'error');
+            console.error('❌ 同步数据到前台时出错:', error);
+            this.showNotification('❌ 数据同步失败，请刷新前台页面', 'error');
         }
     }
     

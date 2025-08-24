@@ -112,12 +112,13 @@ function updateStatistics(stats) {
 
 // 监听localStorage变化，实时更新页面内容
 function listenForDataUpdates() {
-    console.log('启动数据监听...'); // 调试日志
+    console.log('🔄 启动增强数据监听系统...'); // 调试日志
     
-    // 监听storage事件（跨标签页更新）
+    // 方法1: 监听storage事件（跨标签页更新）
     window.addEventListener('storage', function(e) {
-        console.log('检测到localStorage变化:', e.key); // 调试日志
-        if (e.key === 'profile_data' || e.key === 'artworks_data' || e.key === 'i18n_data' || e.key === 'frontend_sync_trigger') {
+        console.log('📨 检测到localStorage变化:', e.key); // 调试日志
+        if (e.key === 'profile_data' || e.key === 'artworks_data' || e.key === 'i18n_data' || 
+            e.key === 'sync_timestamp' || e.key === 'last_admin_update') {
             // 重新加载数据并更新页面
             setTimeout(() => {
                 console.log('执行跨标签页数据更新'); // 调试日志
@@ -193,6 +194,57 @@ function listenForDataUpdates() {
         console.log('页面加载完成，执行初始数据更新'); // 调试日志
         updateProfileData();
     }, 800); // 增加延迟确保在i18n之后执行
+    
+    // 方法2: 监听BroadcastChannel（同源页面间通信）
+    if ('BroadcastChannel' in window) {
+        const channel = new BroadcastChannel('artwork_updates');
+        channel.addEventListener('message', function(e) {
+            console.log('📡 收到BroadcastChannel消息:', e.data);
+            if (e.data.type === 'DATA_UPDATED') {
+                console.log('🔄 通过BroadcastChannel触发数据更新');
+                setTimeout(() => {
+                    reloadArtworks();
+                    reloadI18nData();
+                    updateProfileData();
+                }, 100);
+            }
+        });
+        console.log('✅ BroadcastChannel监听器已启动');
+    }
+    
+    // 方法3: 监听postMessage（iframe/popup通信）
+    window.addEventListener('message', function(e) {
+        if (e.data && e.data.type === 'ARTWORK_DATA_UPDATED') {
+            console.log('📤 收到postMessage数据更新通知');
+            setTimeout(() => {
+                reloadArtworks();
+                reloadI18nData();
+                updateProfileData();
+            }, 100);
+        }
+    });
+    
+    // 方法4: 定时检查特殊更新标记
+    let lastUpdateCheck = localStorage.getItem('last_admin_update');
+    const updateCheckInterval = setInterval(() => {
+        const currentUpdate = localStorage.getItem('last_admin_update');
+        if (currentUpdate && currentUpdate !== lastUpdateCheck) {
+            console.log('⏰ 定时检查发现数据更新');
+            lastUpdateCheck = currentUpdate;
+            setTimeout(() => {
+                reloadArtworks();
+                reloadI18nData();  
+                updateProfileData();
+            }, 100);
+        }
+    }, 3000); // 每3秒检查一次
+    
+    // 清除定时器
+    window.addEventListener('beforeunload', () => {
+        clearInterval(updateCheckInterval);
+    });
+    
+    console.log('✅ 增强数据监听系统已全部启动');
 }
 
 // 重新加载作品数据

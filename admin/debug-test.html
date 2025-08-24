@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>后台数据管理调试测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .test-section { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .test-button { background: #007acc; color: white; border: none; padding: 10px 20px; margin: 5px; border-radius: 5px; cursor: pointer; }
+        .test-button:hover { background: #005a9e; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+        .result-area { background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; margin: 10px 0; border-radius: 5px; font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>🛠️ 后台数据管理调试测试</h1>
+    
+    <div class="test-section">
+        <h2>📊 数据存储测试</h2>
+        <button class="test-button" onclick="testDataStorage()">测试数据存储</button>
+        <button class="test-button" onclick="addTestArtwork()">添加测试作品</button>
+        <button class="test-button" onclick="listAllArtworks()">列出所有作品</button>
+        <button class="test-button" onclick="clearTestData()">清空测试数据</button>
+        <div id="storage-result" class="result-area"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🔄 数据同步测试</h2>
+        <button class="test-button" onclick="testDataSync()">测试数据同步</button>
+        <button class="test-button" onclick="triggerFrontendUpdate()">触发前台更新</button>
+        <button class="test-button" onclick="monitorSyncStatus()">监控同步状态</button>
+        <div id="sync-result" class="result-area"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🌐 BroadcastChannel 测试</h2>
+        <button class="test-button" onclick="testBroadcastChannel()">测试广播通道</button>
+        <button class="test-button" onclick="listenBroadcast()">开始监听广播</button>
+        <div id="broadcast-result" class="result-area"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>💾 LocalStorage 状态</h2>
+        <button class="test-button" onclick="showStorageStatus()">显示存储状态</button>
+        <div id="storage-status" class="result-area"></div>
+    </div>
+
+    <script src="./js/data-manager.js"></script>
+    <script>
+        const dataManager = new DataManager();
+        
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const colorClass = type === 'success' ? 'success' : type === 'error' ? 'error' : 'info';
+            const line = `<div class="${colorClass}">[${timestamp}] ${message}</div>`;
+            element.innerHTML += line;
+            element.scrollTop = element.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        function testDataStorage() {
+            log('storage-result', '开始测试数据存储功能...', 'info');
+            
+            try {
+                // 测试作品数据
+                const artworks = dataManager.getArtworks();
+                log('storage-result', `当前作品数量: ${artworks.length}`, 'info');
+                
+                // 测试个人信息
+                const profile = dataManager.getProfile();
+                log('storage-result', `个人信息存在: ${profile ? '是' : '否'}`, 'info');
+                if (profile) {
+                    log('storage-result', `艺术家姓名: ${profile.name}`, 'info');
+                }
+                
+                // 测试多语言数据
+                const i18n = dataManager.getI18nData();
+                log('storage-result', `多语言数据支持语言: ${Object.keys(i18n).join(', ')}`, 'info');
+                
+                log('storage-result', '✅ 数据存储测试完成', 'success');
+                
+            } catch (error) {
+                log('storage-result', `❌ 数据存储测试失败: ${error.message}`, 'error');
+            }
+        }
+        
+        function addTestArtwork() {
+            log('storage-result', '添加测试作品...', 'info');
+            
+            try {
+                const timestamp = Date.now();
+                const artwork = {
+                    titleKey: `test-artwork-${timestamp}-title`,
+                    descriptionKey: `test-artwork-${timestamp}-desc`, 
+                    category: 'digital',
+                    image: `https://via.placeholder.com/400x300/007acc/white?text=Test+${timestamp}`,
+                    details: {
+                        medium: '数字艺术',
+                        size: '1920x1080',
+                        year: '2025'
+                    }
+                };
+                
+                // 添加多语言数据
+                const i18nData = dataManager.getI18nData();
+                i18nData.zh[artwork.titleKey] = `测试作品 ${timestamp}`;
+                i18nData.en[artwork.titleKey] = `Test Artwork ${timestamp}`;
+                i18nData.ja[artwork.titleKey] = `テスト作品 ${timestamp}`;
+                
+                i18nData.zh[artwork.descriptionKey] = `这是测试作品的描述 ${timestamp}`;
+                i18nData.en[artwork.descriptionKey] = `This is test artwork description ${timestamp}`;
+                i18nData.ja[artwork.descriptionKey] = `これはテスト作品の説明です ${timestamp}`;
+                
+                dataManager.setI18nData(i18nData);
+                
+                const newArtwork = dataManager.addArtwork(artwork);
+                log('storage-result', `✅ 成功添加测试作品，ID: ${newArtwork.id}`, 'success');
+                
+                // 触发同步
+                setTimeout(() => {
+                    triggerFrontendUpdate();
+                }, 100);
+                
+            } catch (error) {
+                log('storage-result', `❌ 添加测试作品失败: ${error.message}`, 'error');
+            }
+        }
+        
+        function listAllArtworks() {
+            log('storage-result', '列出所有作品...', 'info');
+            
+            try {
+                const artworks = dataManager.getArtworks();
+                const i18nData = dataManager.getI18nData();
+                
+                log('storage-result', `=== 作品列表 (${artworks.length} 件) ===`, 'info');
+                
+                artworks.forEach(artwork => {
+                    const title = i18nData.zh[artwork.titleKey] || artwork.titleKey;
+                    log('storage-result', `ID: ${artwork.id} | ${title} | ${artwork.category}`, 'info');
+                });
+                
+                if (artworks.length === 0) {
+                    log('storage-result', '没有找到作品', 'info');
+                }
+                
+            } catch (error) {
+                log('storage-result', `❌ 列出作品失败: ${error.message}`, 'error');
+            }
+        }
+        
+        function clearTestData() {
+            if (confirm('确定要清空所有测试数据吗？')) {
+                log('storage-result', '清空测试数据...', 'info');
+                try {
+                    // 只保留非测试数据
+                    const artworks = dataManager.getArtworks();
+                    const filteredArtworks = artworks.filter(artwork => 
+                        !artwork.titleKey.includes('test-artwork-')
+                    );
+                    
+                    dataManager.setArtworks(filteredArtworks);
+                    
+                    log('storage-result', `✅ 清空完成，保留 ${filteredArtworks.length} 件非测试作品`, 'success');
+                    
+                } catch (error) {
+                    log('storage-result', `❌ 清空数据失败: ${error.message}`, 'error');
+                }
+            }
+        }
+        
+        function testDataSync() {
+            log('sync-result', '测试数据同步功能...', 'info');
+            
+            try {
+                const timestamp = Date.now();
+                
+                // 模拟后台数据更新
+                localStorage.setItem('sync_timestamp', timestamp.toString());
+                log('sync-result', `设置同步时间戳: ${timestamp}`, 'info');
+                
+                // 设置更新标记
+                localStorage.setItem('last_admin_update', JSON.stringify({
+                    timestamp: timestamp,
+                    type: 'test_sync',
+                    action: 'debug_test'
+                }));
+                log('sync-result', '设置管理员更新标记', 'info');
+                
+                log('sync-result', '✅ 数据同步标记已设置', 'success');
+                
+            } catch (error) {
+                log('sync-result', `❌ 数据同步测试失败: ${error.message}`, 'error');
+            }
+        }
+        
+        function triggerFrontendUpdate() {
+            log('sync-result', '触发前台数据更新...', 'info');
+            
+            try {
+                const timestamp = Date.now();
+                
+                // 方法1: BroadcastChannel
+                if ('BroadcastChannel' in window) {
+                    const channel = new BroadcastChannel('artwork_updates');
+                    channel.postMessage({
+                        type: 'DATA_UPDATED',
+                        timestamp: timestamp,
+                        keys: ['artworks_data', 'i18n_data', 'profile_data']
+                    });
+                    log('sync-result', '📡 通过BroadcastChannel发送更新通知', 'success');
+                }
+                
+                // 方法2: 强制触发storage事件
+                const storageEvent = new StorageEvent('storage', {
+                    key: 'artworks_data',
+                    newValue: localStorage.getItem('artworks_data'),
+                    oldValue: null,
+                    storageArea: localStorage,
+                    url: window.location.href
+                });
+                window.dispatchEvent(storageEvent);
+                log('sync-result', '🚀 手动触发storage事件', 'success');
+                
+                // 方法3: 更新标记
+                localStorage.setItem('last_admin_update', JSON.stringify({
+                    timestamp: timestamp,
+                    type: 'manual_trigger',
+                    action: 'frontend_update'
+                }));
+                log('sync-result', '⏰ 更新同步标记', 'success');
+                
+                log('sync-result', '✅ 前台更新触发完成', 'success');
+                
+            } catch (error) {
+                log('sync-result', `❌ 触发前台更新失败: ${error.message}`, 'error');
+            }
+        }
+        
+        function monitorSyncStatus() {
+            log('sync-result', '开始监控同步状态...', 'info');
+            
+            let lastCheck = localStorage.getItem('last_admin_update');
+            const monitor = setInterval(() => {
+                const currentCheck = localStorage.getItem('last_admin_update');
+                if (currentCheck !== lastCheck) {
+                    lastCheck = currentCheck;
+                    const data = JSON.parse(currentCheck || '{}');
+                    log('sync-result', `🔄 检测到同步更新: ${data.type} at ${new Date(data.timestamp).toLocaleTimeString()}`, 'info');
+                }
+            }, 1000);
+            
+            // 10秒后停止监控
+            setTimeout(() => {
+                clearInterval(monitor);
+                log('sync-result', '⏹️ 同步监控已停止', 'info');
+            }, 10000);
+        }
+        
+        function testBroadcastChannel() {
+            if (!('BroadcastChannel' in window)) {
+                log('broadcast-result', '❌ 浏览器不支持BroadcastChannel', 'error');
+                return;
+            }
+            
+            log('broadcast-result', '测试BroadcastChannel...', 'info');
+            
+            const channel = new BroadcastChannel('artwork_updates');
+            channel.postMessage({
+                type: 'TEST_MESSAGE',
+                message: 'Hello from debug test!',
+                timestamp: Date.now()
+            });
+            
+            log('broadcast-result', '📡 测试消息已发送', 'success');
+        }
+        
+        function listenBroadcast() {
+            if (!('BroadcastChannel' in window)) {
+                log('broadcast-result', '❌ 浏览器不支持BroadcastChannel', 'error');
+                return;
+            }
+            
+            log('broadcast-result', '开始监听BroadcastChannel...', 'info');
+            
+            const channel = new BroadcastChannel('artwork_updates');
+            channel.addEventListener('message', function(e) {
+                log('broadcast-result', `📨 收到消息: ${JSON.stringify(e.data)}`, 'success');
+            });
+            
+            log('broadcast-result', '✅ BroadcastChannel监听器已启动', 'success');
+        }
+        
+        function showStorageStatus() {
+            log('storage-status', '显示localStorage状态...', 'info');
+            
+            const keys = [
+                'artworks_data', 
+                'profile_data', 
+                'i18n_data', 
+                'site_config',
+                'sync_timestamp',
+                'last_admin_update'
+            ];
+            
+            keys.forEach(key => {
+                const data = localStorage.getItem(key);
+                if (data) {
+                    try {
+                        const parsed = JSON.parse(data);
+                        let size = JSON.stringify(parsed).length;
+                        let summary = '';
+                        
+                        if (key === 'artworks_data' && Array.isArray(parsed)) {
+                            summary = `${parsed.length} 件作品`;
+                        } else if (key === 'i18n_data') {
+                            summary = `${Object.keys(parsed).length} 种语言`;
+                        } else if (key === 'profile_data') {
+                            summary = `艺术家: ${parsed.name || '未知'}`;
+                        }
+                        
+                        log('storage-status', `✅ ${key}: ${size} 字节 ${summary}`, 'success');
+                    } catch (e) {
+                        log('storage-status', `⚠️ ${key}: 数据格式错误`, 'error');
+                    }
+                } else {
+                    log('storage-status', `❌ ${key}: 不存在`, 'error');
+                }
+            });
+            
+            log('storage-status', `总计localStorage使用: ${JSON.stringify(localStorage).length} 字节`, 'info');
+        }
+        
+        // 页面加载时自动显示状态
+        document.addEventListener('DOMContentLoaded', function() {
+            showStorageStatus();
+        });
+    </script>
+</body>
+</html>
