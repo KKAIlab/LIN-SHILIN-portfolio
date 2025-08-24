@@ -398,7 +398,33 @@ function initI18n() {
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(initI18n, 50); // 减少延迟，优先初始化i18n，然后由main.js在后面覆盖个人信息
+    console.log('DOM加载完成，开始初始化i18n...');
+    setTimeout(() => {
+        console.log('开始初始化i18n系统');
+        initI18n();
+        
+        // 验证初始化结果
+        setTimeout(() => {
+            const langBtns = document.querySelectorAll('.lang-btn');
+            console.log(`找到 ${langBtns.length} 个语言按钮`);
+            langBtns.forEach((btn, index) => {
+                const lang = btn.getAttribute('data-lang');
+                console.log(`语言按钮 ${index + 1}: ${lang}`);
+                
+                // 验证事件监听器是否正确绑定
+                if (btn._langHandler) {
+                    console.log(`按钮 ${lang} 事件处理器已绑定`);
+                } else {
+                    console.warn(`按钮 ${lang} 事件处理器缺失，重新绑定`);
+                    btn._langHandler = function() {
+                        console.log('手动绑定的语言切换:', lang);
+                        switchLanguage(lang);
+                    };
+                    btn.addEventListener('click', btn._langHandler);
+                }
+            });
+        }, 100);
+    }, 50); // 减少延迟，优先初始化i18n，然后由main.js在后面覆盖个人信息
 });
 
 // 添加全局函数用于强制重新应用个人信息
@@ -438,3 +464,8 @@ window.forceApplyProfileData = function() {
 window.checkI18nReady = function() {
     return typeof i18n !== 'undefined' && typeof currentLanguage !== 'undefined';
 };
+
+// 暴露核心函数到全局作用域，确保其他脚本可以访问
+window.switchLanguage = switchLanguage;
+window.getText = getText;
+window.i18nData = i18n;

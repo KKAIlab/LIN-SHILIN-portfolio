@@ -466,12 +466,40 @@
         
         // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', function() {
-            refreshDataDisplay();
+            // 等待一下确保外部脚本加载完成
+            setTimeout(() => {
+                refreshDataDisplay();
+                // 检查脚本是否加载成功
+                checkScriptLoading();
+            }, 500);
         });
+        
+        // 检查脚本加载状态
+        function checkScriptLoading() {
+            const statusMessages = [];
+            
+            if (typeof switchLanguage === 'function') {
+                statusMessages.push('✅ i18n.js 加载成功');
+            } else {
+                statusMessages.push('❌ i18n.js 加载失败');
+            }
+            
+            if (typeof getArtworksData === 'function') {
+                statusMessages.push('✅ main.js 加载成功');
+            } else {
+                statusMessages.push('❌ main.js 加载失败');
+            }
+            
+            // 显示加载状态
+            const statusElement = document.getElementById('i18n-result');
+            if (statusElement) {
+                statusElement.innerHTML = statusMessages.join('\\n') + '\\n\\n点击"检查多语言数据"按钮查看详细信息';
+            }
+        }
     </script>
     
     <!-- 加载原有的JavaScript文件来测试功能 -->
-    <script src="./js/i18n.js"></script>
-    <script src="./js/main.js"></script>
+    <script src="./js/i18n.js" onload="console.log('i18n.js 加载完成')" onerror="console.error('i18n.js 加载失败')"></script>
+    <script src="./js/main.js" onload="console.log('main.js 加载完成')" onerror="console.error('main.js 加载失败')"></script>
 </body>
 </html>
