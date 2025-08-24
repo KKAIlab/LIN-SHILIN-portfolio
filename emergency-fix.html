@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>紧急修复测试页面</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .lang-buttons { 
+            text-align: center; 
+            margin: 30px 0; 
+        }
+        .lang-btn { 
+            background: rgba(255, 255, 255, 0.2); 
+            color: white; 
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 12px 24px; 
+            margin: 8px; 
+            border-radius: 25px; 
+            cursor: pointer; 
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .lang-btn:hover { 
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        .lang-btn.active { 
+            background: #ff6b6b; 
+            border-color: #ff6b6b;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+        .test-content { 
+            background: rgba(255, 255, 255, 0.05); 
+            padding: 20px; 
+            margin: 20px 0; 
+            border-radius: 10px; 
+            border-left: 4px solid #ff6b6b;
+        }
+        .status { 
+            background: rgba(0, 0, 0, 0.3); 
+            color: #00ff00; 
+            padding: 15px; 
+            border-radius: 10px; 
+            font-family: 'Courier New', monospace; 
+            font-size: 12px; 
+            margin: 20px 0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        h1 { text-align: center; margin-bottom: 30px; }
+        .fix-btn { 
+            background: #28a745; 
+            color: white; 
+            border: none; 
+            padding: 12px 24px; 
+            margin: 10px 5px; 
+            border-radius: 25px; 
+            cursor: pointer; 
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .fix-btn:hover { 
+            background: #218838;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚑 紧急语言切换修复</h1>
+        
+        <div class="lang-buttons">
+            <button class="lang-btn active" data-lang="zh">中文 (Chinese)</button>
+            <button class="lang-btn" data-lang="en">English</button>
+            <button class="lang-btn" data-lang="ja">日本語 (Japanese)</button>
+        </div>
+        
+        <div class="test-content">
+            <h2>🌐 多语言内容测试</h2>
+            <p><strong>标题：</strong><span data-i18n="hero-line1">创造</span> <span data-i18n="hero-line2">独特</span> <span data-i18n="hero-line3">艺术</span></p>
+            <p><strong>副标题：</strong><span data-i18n="hero-subtitle">探索色彩与形态的无限可能</span></p>
+            <p><strong>导航：</strong><span data-i18n="nav-home">首页</span> | <span data-i18n="nav-about">关于</span> | <span data-i18n="nav-gallery">作品</span></p>
+            <p><strong>艺术家：</strong><span data-i18n="artist-name">林士林</span></p>
+            <p><strong>按钮：</strong><span data-i18n="cta-button">查看作品</span></p>
+        </div>
+        
+        <div style="text-align: center;">
+            <button class="fix-btn" onclick="applyEmergencyFix()">🔧 应用紧急修复</button>
+            <button class="fix-btn" onclick="testAllLanguages()">🧪 测试所有语言</button>
+            <button class="fix-btn" onclick="openMainSite()">🏠 打开主网站</button>
+            <button class="fix-btn" onclick="clearStatus()">🗑️ 清空状态</button>
+        </div>
+        
+        <div id="status" class="status">等待操作...</div>
+    </div>
+
+    <script>
+        // 基础翻译数据
+        const translations = {
+            zh: {
+                'hero-line1': '创造',
+                'hero-line2': '独特', 
+                'hero-line3': '艺术',
+                'hero-subtitle': '探索色彩与形态的无限可能',
+                'nav-home': '首页',
+                'nav-about': '关于',
+                'nav-gallery': '作品',
+                'nav-process': '创作',
+                'nav-contact': '联系',
+                'artist-name': '林士林',
+                'cta-button': '查看作品'
+            },
+            en: {
+                'hero-line1': 'CREATE',
+                'hero-line2': 'UNIQUE',
+                'hero-line3': 'ART', 
+                'hero-subtitle': 'Exploring infinite possibilities of color and form',
+                'nav-home': 'Home',
+                'nav-about': 'About',
+                'nav-gallery': 'Gallery',
+                'nav-process': 'Process',
+                'nav-contact': 'Contact',
+                'artist-name': 'LIN SHILIN',
+                'cta-button': 'View Works'
+            },
+            ja: {
+                'hero-line1': '創造',
+                'hero-line2': 'ユニーク',
+                'hero-line3': 'アート',
+                'hero-subtitle': '色と形の無限の可能性を探求',
+                'nav-home': 'ホーム',
+                'nav-about': '紹介', 
+                'nav-gallery': '作品',
+                'nav-process': '制作',
+                'nav-contact': '連絡',
+                'artist-name': 'リンシリン',
+                'cta-button': '作品を見る'
+            }
+        };
+        
+        let currentLang = 'zh';
+        let logs = [];
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}`;
+            logs.push(logMessage);
+            document.getElementById('status').textContent = logs.join('\n');
+            console.log(logMessage);
+        }
+        
+        function switchLanguage(lang) {
+            log(`🌐 切换语言到: ${lang}`);
+            
+            // 更新按钮状态
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('data-lang') === lang) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // 更新所有多语言元素
+            const elements = document.querySelectorAll('[data-i18n]');
+            let successCount = 0;
+            
+            elements.forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (translations[lang] && translations[lang][key]) {
+                    const oldText = element.textContent;
+                    const newText = translations[lang][key];
+                    element.textContent = newText;
+                    log(`  ✅ ${key}: "${oldText}" → "${newText}"`);
+                    successCount++;
+                } else {
+                    log(`  ❌ 未找到翻译: ${key}`);
+                }
+            });
+            
+            currentLang = lang;
+            localStorage.setItem('preferredLanguage', lang);
+            document.documentElement.lang = lang;
+            
+            log(`🎉 语言切换完成! 成功更新 ${successCount} 个元素`);
+        }
+        
+        function applyEmergencyFix() {
+            log('🚑 应用紧急修复到主网站...');
+            
+            try {
+                // 尝试在主窗口中注入修复代码
+                const fixCode = `
+                    console.log('🚑 紧急修复已注入');
+                    
+                    // 强制重新绑定语言按钮
+                    document.querySelectorAll('.lang-btn').forEach((btn, index) => {
+                        const lang = btn.getAttribute('data-lang');
+                        const newBtn = btn.cloneNode(true);
+                        btn.parentNode.replaceChild(newBtn, btn);
+                        
+                        newBtn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            console.log('🌐 紧急修复: 切换到 ' + lang);
+                            
+                            document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+                            newBtn.classList.add('active');
+                            
+                            const translations = ${JSON.stringify(translations)};
+                            const elements = document.querySelectorAll('[data-i18n]');
+                            
+                            elements.forEach(element => {
+                                const key = element.getAttribute('data-i18n');
+                                if (translations[lang] && translations[lang][key]) {
+                                    element.textContent = translations[lang][key];
+                                }
+                            });
+                            
+                            window.currentLanguage = lang;
+                            localStorage.setItem('preferredLanguage', lang);
+                            document.documentElement.lang = lang;
+                            
+                            // 显示成功提示
+                            const notification = document.createElement('div');
+                            notification.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #28a745; color: white; padding: 15px; border-radius: 8px; z-index: 10000;';
+                            notification.textContent = '✅ 语言已切换到 ' + lang;
+                            document.body.appendChild(notification);
+                            setTimeout(() => document.body.removeChild(notification), 3000);
+                        });
+                    });
+                `;
+                
+                // 尝试打开主网站并注入代码
+                const mainWindow = window.open('https://kkailab.github.io/LIN-SHILIN-portfolio/', '_blank');
+                
+                setTimeout(() => {
+                    try {
+                        mainWindow.eval(fixCode);
+                        log('✅ 修复代码已成功注入到主网站');
+                    } catch (e) {
+                        log('❌ 无法直接注入代码（跨域限制）');
+                        log('💡 请手动复制以下代码到主网站控制台:');
+                        log(fixCode);
+                    }
+                }, 2000);
+                
+            } catch (e) {
+                log('❌ 应用修复失败: ' + e.message);
+            }
+        }
+        
+        function testAllLanguages() {
+            log('🧪 开始测试所有语言...');
+            const languages = ['zh', 'en', 'ja'];
+            let index = 0;
+            
+            function testNext() {
+                if (index < languages.length) {
+                    const lang = languages[index];
+                    switchLanguage(lang);
+                    index++;
+                    setTimeout(testNext, 1500);
+                } else {
+                    log('🎉 所有语言测试完成');
+                }
+            }
+            
+            testNext();
+        }
+        
+        function openMainSite() {
+            log('🏠 打开主网站...');
+            window.open('https://kkailab.github.io/LIN-SHILIN-portfolio/', '_blank');
+        }
+        
+        function clearStatus() {
+            logs = [];
+            document.getElementById('status').textContent = '状态已清空';
+        }
+        
+        // 绑定语言按钮事件
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const lang = btn.getAttribute('data-lang');
+                switchLanguage(lang);
+            });
+        });
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            log('🔧 紧急修复页面已加载');
+            log('📝 点击语言按钮测试切换功能');
+            log('🚑 点击"应用紧急修复"按钮尝试修复主网站');
+        });
+    </script>
+</body>
+</html>
