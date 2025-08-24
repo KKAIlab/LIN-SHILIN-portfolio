@@ -242,15 +242,43 @@ let currentLanguage = 'zh';
 // 切换语言函数
 function switchLanguage(lang) {
     currentLanguage = lang;
+    window.currentLanguage = lang; // 将当前语言存储在全局变量中
     
     // 更新所有带有 data-i18n 属性的元素
     document.querySelectorAll('[data-i18n]').forEach(element => {
         const key = element.getAttribute('data-i18n');
         
-        // 检查是否是已被个人信息更新的元素，如果是则跳过
+        // 强化个人信息保护机制
         if (element.getAttribute('data-profile-updated') === 'true') {
-            console.log('跳过已更新的个人信息元素:', key);
+            console.log('保护个人信息元素，跳过语言更新:', key, element.textContent);
             return;
+        }
+        
+        // 额外保护机制：检查是否为特定的个人信息元素
+        if (key === 'artist-name' || key === 'about-intro') {
+            const storedProfile = localStorage.getItem('profile_data');
+            if (storedProfile) {
+                const profile = JSON.parse(storedProfile);
+                if ((key === 'artist-name' && profile.name && element.textContent === profile.name) ||
+                    (key === 'about-intro' && profile.bio && element.textContent === profile.bio)) {
+                    console.log('检测到个人信息已应用，跳过语言更新:', key);
+                    element.setAttribute('data-profile-updated', 'true');
+                    return;
+                }
+            }
+        }
+        
+        // 邮箱元素特别保护
+        if (element.id === 'contact-email-address') {
+            const storedProfile = localStorage.getItem('profile_data');
+            if (storedProfile) {
+                const profile = JSON.parse(storedProfile);
+                if (profile.email && element.textContent === profile.email) {
+                    console.log('保护邮箱元素，跳过语言更新');
+                    element.setAttribute('data-profile-updated', 'true');
+                    return;
+                }
+            }
         }
         
         if (i18n[lang] && i18n[lang][key]) {
@@ -331,5 +359,43 @@ function initI18n() {
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(initI18n, 100); // 延迟初始化，确保其他脚本已加载
+    setTimeout(initI18n, 50); // 减少延迟，优先初始化i18n，然后由main.js在后面覆盖个人信息
 });
+
+// 添加全局函数用于强制重新应用个人信息
+window.forceApplyProfileData = function() {
+    console.log('强制重新应用个人信息数据');
+    
+    const storedProfile = localStorage.getItem('profile_data');
+    if (!storedProfile) return;
+    
+    const profile = JSON.parse(storedProfile);
+    
+    // 强制更新艺术家姓名
+    document.querySelectorAll('[data-i18n="artist-name"]').forEach(element => {
+        element.textContent = profile.name;
+        element.setAttribute('data-profile-updated', 'true');
+        console.log('强制更新艺术家姓名:', profile.name);
+    });
+    
+    // 强制更新个人简介
+    const aboutIntro = document.querySelector('[data-i18n="about-intro"]');
+    if (aboutIntro && profile.bio) {
+        aboutIntro.textContent = profile.bio;
+        aboutIntro.setAttribute('data-profile-updated', 'true');
+        console.log('强制更新个人简介长度:', profile.bio.length);
+    }
+    
+    // 强制更新邮箱
+    const emailElement = document.getElementById('contact-email-address');
+    if (emailElement && profile.email) {
+        emailElement.textContent = profile.email;
+        emailElement.setAttribute('data-profile-updated', 'true');
+        console.log('强制更新邮箱:', profile.email);
+    }
+};
+
+// 给main.js提供一个检查函数
+window.checkI18nReady = function() {
+    return typeof i18n !== 'undefined' && typeof currentLanguage !== 'undefined';
+};

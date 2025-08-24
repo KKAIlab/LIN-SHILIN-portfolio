@@ -1,48 +1,88 @@
 // 更新个人信息和统计数据
 function updateProfileData() {
     const storedProfile = localStorage.getItem('profile_data');
-    if (storedProfile) {
-        const profile = JSON.parse(storedProfile);
-        console.log('更新个人信息:', profile); // 调试日志
-        
-        // 更新艺术家姓名（不被i18n覆盖）
-        const artistNameElements = document.querySelectorAll('[data-i18n="artist-name"]');
-        artistNameElements.forEach(element => {
-            element.textContent = profile.name;
+    if (!storedProfile) {
+        console.log('没有找到profile_data，跳过更新');
+        return;
+    }
+    
+    const profile = JSON.parse(storedProfile);
+    console.log('开始更新个人信息:', profile); // 调试日志
+    
+    // 等待DOM完全加载
+    if (document.readyState !== 'complete') {
+        setTimeout(() => updateProfileData(), 100);
+        return;
+    }
+    
+    let updatedCount = 0;
+    
+    // 强制更新艺术家姓名（不被i18n覆盖）
+    const artistNameElements = document.querySelectorAll('[data-i18n="artist-name"]');
+    artistNameElements.forEach(element => {
+        const oldText = element.textContent;
+        element.textContent = profile.name;
+        element.setAttribute('data-profile-updated', 'true'); // 标记已更新
+        if (oldText !== profile.name) {
+            console.log('更新艺术家姓名:', oldText, ' -> ', profile.name);
+            updatedCount++;
+        }
+    });
+    
+    // 强制更新关于页面的个人简介（不被i18n覆盖）
+    const aboutIntro = document.querySelector('[data-i18n="about-intro"]');
+    if (aboutIntro) {
+        const oldBio = aboutIntro.textContent;
+        aboutIntro.textContent = profile.bio;
+        aboutIntro.setAttribute('data-profile-updated', 'true'); // 标记已更新
+        if (oldBio !== profile.bio) {
+            console.log('更新个人简介长度:', oldBio.length, ' -> ', profile.bio.length);
+            updatedCount++;
+        }
+    }
+    
+    // 强制更新联系邮箱（使用特定ID确保准确更新）
+    const emailElement = document.getElementById('contact-email-address');
+    if (emailElement) {
+        const oldEmail = emailElement.textContent;
+        emailElement.textContent = profile.email;
+        emailElement.setAttribute('data-profile-updated', 'true'); // 标记已更新
+        if (oldEmail !== profile.email) {
+            console.log('更新邮箱:', oldEmail, ' -> ', profile.email);
+            updatedCount++;
+        }
+    } else {
+        console.log('警告：未找到邮箱元素 contact-email-address');
+    }
+    
+    // 备用方法：通过类名查找邮箱元素（以防ID不存在）
+    const contactEmailElements = document.querySelectorAll('.contact-item p');
+    contactEmailElements.forEach(element => {
+        if (element.textContent.includes('@') || 
+            element.textContent.includes('linshilin') || 
+            element.textContent.includes('gmail.com')) {
+            const oldEmail = element.textContent;
+            element.textContent = profile.email;
             element.setAttribute('data-profile-updated', 'true'); // 标记已更新
-        });
-        
-        // 更新关于页面的个人简介（不被i18n覆盖）
-        const aboutIntro = document.querySelector('[data-i18n="about-intro"]');
-        if (aboutIntro) {
-            aboutIntro.textContent = profile.bio;
-            aboutIntro.setAttribute('data-profile-updated', 'true'); // 标记已更新
-        }
-        
-        // 更新联系邮箱（使用特定ID确保准确更新）
-        const emailElement = document.getElementById('contact-email-address');
-        if (emailElement) {
-            console.log('更新邮箱:', emailElement.textContent, ' -> ', profile.email); // 调试日志
-            emailElement.textContent = profile.email;
-            emailElement.setAttribute('data-profile-updated', 'true'); // 标记已更新
-        }
-        
-        // 备用方法：通过类名查找（以防ID不存在）
-        const contactEmailElements = document.querySelectorAll('.contact-item p');
-        contactEmailElements.forEach(element => {
-            if (element.textContent.includes('@') || 
-                element.textContent.includes('linshilin') || 
-                element.textContent.includes('gmail.com')) {
-                console.log('备用更新邮箱:', element.textContent, ' -> ', profile.email); // 调试日志
-                element.textContent = profile.email;
-                element.setAttribute('data-profile-updated', 'true'); // 标记已更新
+            if (oldEmail !== profile.email) {
+                console.log('备用曹新邮箱:', oldEmail, ' -> ', profile.email);
+                updatedCount++;
             }
-        });
-        
-        // 更新统计数据
+        }
+    });
+    
+    // 更新统计数据
+    if (profile.stats) {
         updateStatistics(profile.stats);
-        
-        console.log('个人信息更新完成'); // 调试日志
+    }
+    
+    console.log(`个人信息更新完成，共更新${updatedCount}个元素`); // 调试日志
+    
+    // 如果有i18n强制应用函数，也调用一下
+    if (typeof window.forceApplyProfileData === 'function') {
+        setTimeout(() => {
+            window.forceApplyProfileData();
+        }, 100);
     }
 }
 
@@ -81,9 +121,20 @@ function listenForDataUpdates() {
             // 重新加载数据并更新页面
             setTimeout(() => {
                 console.log('执行跨标签页数据更新'); // 调试日志
-                updateProfileData();
-                reloadArtworks();
-                reloadI18nData();
+                
+                // 先重新加载i18n和作品数据
+                if (e.key === 'artworks_data') {
+                    reloadArtworks();
+                }
+                if (e.key === 'i18n_data') {
+                    reloadI18nData();
+                }
+                
+                // 最后强制更新个人信息，确保不被覆盖
+                setTimeout(() => {
+                    console.log('强制应用个人信息更新，覆盖i18n');
+                    updateProfileData();
+                }, 300);
             }, 100);
         }
     });
@@ -103,7 +154,6 @@ function listenForDataUpdates() {
         if (currentProfile !== lastProfileUpdate) {
             console.log('检测到个人信息变化'); // 调试日志
             lastProfileUpdate = currentProfile;
-            updateProfileData();
             hasUpdates = true;
         }
         
@@ -122,9 +172,14 @@ function listenForDataUpdates() {
         }
         
         if (hasUpdates) {
-            console.log('数据更新完成，重新应用个人信息'); // 调试日志
-            // 确保个人信息最后更新，避免被覆盖
-            setTimeout(updateProfileData, 200);
+            console.log('数据更新完成，强制应用个人信息'); // 调试日志
+            // 确保个人信息最后更新，避免被覆盖，增加延迟
+            setTimeout(() => {
+                updateProfileData();
+                
+                // 再次确保个人信息应用成功
+                setTimeout(updateProfileData, 500);
+            }, 300);
         }
     }, 1000); // 每秒检查一次
     
@@ -137,7 +192,7 @@ function listenForDataUpdates() {
     setTimeout(() => {
         console.log('页面加载完成，执行初始数据更新'); // 调试日志
         updateProfileData();
-    }, 500);
+    }, 800); // 增加延迟确保在i18n之后执行
 }
 
 // 重新加载作品数据
@@ -173,14 +228,38 @@ window.refreshProfileData = function() {
     // 强制更新个人信息
     updateProfileData();
     
+    // 使用i18n的强制应用函数
+    if (typeof window.forceApplyProfileData === 'function') {
+        setTimeout(() => {
+            window.forceApplyProfileData();
+        }, 200);
+    }
+    
     // 特别检查邮箱更新
     const storedProfile = localStorage.getItem('profile_data');
     if (storedProfile) {
         const profile = JSON.parse(storedProfile);
         const emailElement = document.getElementById('contact-email-address');
         if (emailElement && profile.email) {
-            console.log('强制更新邮箱:', profile.email);
+            console.log('特别检查强制更新邮箱:', emailElement.textContent, ' -> ', profile.email);
             emailElement.textContent = profile.email;
+            emailElement.setAttribute('data-profile-updated', 'true');
+        }
+        
+        // 检查所有艺术家姓名元素
+        const artistElements = document.querySelectorAll('[data-i18n="artist-name"]');
+        artistElements.forEach(element => {
+            console.log('特别检查强制更新艺术家姓名:', element.textContent, ' -> ', profile.name);
+            element.textContent = profile.name;
+            element.setAttribute('data-profile-updated', 'true');
+        });
+        
+        // 检查个人简介
+        const aboutElement = document.querySelector('[data-i18n="about-intro"]');
+        if (aboutElement && profile.bio) {
+            console.log('特别检查强制更新个人简介长度:', aboutElement.textContent.length, ' -> ', profile.bio.length);
+            aboutElement.textContent = profile.bio;
+            aboutElement.setAttribute('data-profile-updated', 'true');
         }
     }
     
@@ -197,14 +276,14 @@ window.refreshProfileData = function() {
         z-index: 10000;
         font-size: 14px;
     `;
-    notification.textContent = '个人信息已刷新';
+    notification.textContent = '个人信息已强制刷新';
     document.body.appendChild(notification);
     
     setTimeout(() => {
         if (document.body.contains(notification)) {
             document.body.removeChild(notification);
         }
-    }, 2000);
+    }, 3000);
 };
 
 // 等待 DOM 加载完成
@@ -215,10 +294,17 @@ document.addEventListener('DOMContentLoaded', function() {
     initMobileMenu();
     initSmoothScroll();
     
-    // 延迟更新个人信息，确保DOM完全加载
+    // 确保个人信息在i18n之后更新，增加延迟到500ms
     setTimeout(() => {
+        console.log('开始强制更新个人信息，确保覆盖i18n'); // 调试日志
         updateProfileData(); // 更新个人信息
-    }, 100);
+        
+        // 再次延迟确保完全覆盖
+        setTimeout(() => {
+            console.log('二次个人信息更新，防止被覆盖'); // 调试日志
+            updateProfileData();
+        }, 200);
+    }, 500);
     
     initGallery();
     initModal();

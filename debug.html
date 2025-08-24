@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据调试页面</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .data-box { border: 1px solid #ccc; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .data-box h3 { margin-top: 0; color: #333; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>🔍 数据调试页面</h1>
+    <p>检查localStorage中的数据状态和前台读取情况</p>
+    
+    <div class="controls">
+        <button onclick="loadData()">🔄 刷新数据</button>
+        <button onclick="testProfileUpdate()">🧪 测试个人信息更新</button>
+        <button onclick="clearAllData()">🗑️ 清空所有数据</button>
+        <button onclick="initializeTestData()">🎯 初始化测试数据</button>
+    </div>
+    
+    <div class="data-box">
+        <h3>📊 localStorage 原始数据</h3>
+        <div id="localStorage-data">
+            <p>加载中...</p>
+        </div>
+    </div>
+    
+    <div class="data-box">
+        <h3>👤 个人信息数据 (profile_data)</h3>
+        <div id="profile-data">
+            <p>加载中...</p>
+        </div>
+    </div>
+    
+    <div class="data-box">
+        <h3>🎨 作品数据 (artworks_data)</h3>
+        <div id="artworks-data">
+            <p>加载中...</p>
+        </div>
+    </div>
+    
+    <div class="data-box">
+        <h3>🌍 多语言数据 (i18n_data)</h3>
+        <div id="i18n-data">
+            <p>加载中...</p>
+        </div>
+    </div>
+    
+    <div class="data-box">
+        <h3>🔍 前台页面元素检测</h3>
+        <div id="elements-check">
+            <p>加载中...</p>
+        </div>
+    </div>
+    
+    <div class="data-box">
+        <h3>📝 测试日志</h3>
+        <div id="test-log">
+            <pre id="log-content"></pre>
+        </div>
+    </div>
+
+    <script>
+        let logContent = '';
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logContent += `[${timestamp}] ${message}\n`;
+            document.getElementById('log-content').textContent = logContent;
+        }
+        
+        function loadData() {
+            log('开始加载数据...');
+            
+            // 检查localStorage中的所有数据
+            const keys = ['profile_data', 'artworks_data', 'i18n_data', 'site_config'];
+            let localStorageHtml = '<ul>';
+            
+            keys.forEach(key => {
+                const data = localStorage.getItem(key);
+                if (data) {
+                    localStorageHtml += `<li><strong>${key}</strong>: ${data.length} 字符</li>`;
+                } else {
+                    localStorageHtml += `<li><strong>${key}</strong>: <span class="error">不存在</span></li>`;
+                }
+            });
+            localStorageHtml += '</ul>';
+            document.getElementById('localStorage-data').innerHTML = localStorageHtml;
+            
+            // 显示个人信息数据
+            const profileData = localStorage.getItem('profile_data');
+            if (profileData) {
+                try {
+                    const profile = JSON.parse(profileData);
+                    document.getElementById('profile-data').innerHTML = `<pre>${JSON.stringify(profile, null, 2)}</pre>`;
+                    log(`个人信息数据加载成功: 姓名=${profile.name}, 邮箱=${profile.email}`);
+                } catch (e) {
+                    document.getElementById('profile-data').innerHTML = `<span class="error">数据解析错误: ${e.message}</span>`;
+                    log(`个人信息数据解析失败: ${e.message}`);
+                }
+            } else {
+                document.getElementById('profile-data').innerHTML = '<span class="error">无个人信息数据</span>';
+                log('localStorage中没有profile_data');
+            }
+            
+            // 显示作品数据
+            const artworksData = localStorage.getItem('artworks_data');
+            if (artworksData) {
+                try {
+                    const artworks = JSON.parse(artworksData);
+                    document.getElementById('artworks-data').innerHTML = `<p>作品数量: ${artworks.length}</p><pre>${JSON.stringify(artworks.slice(0, 2), null, 2)}...</pre>`;
+                    log(`作品数据加载成功: ${artworks.length}件作品`);
+                } catch (e) {
+                    document.getElementById('artworks-data').innerHTML = `<span class="error">数据解析错误: ${e.message}</span>`;
+                }
+            } else {
+                document.getElementById('artworks-data').innerHTML = '<span class="error">无作品数据</span>';
+                log('localStorage中没有artworks_data');
+            }
+            
+            // 显示多语言数据
+            const i18nData = localStorage.getItem('i18n_data');
+            if (i18nData) {
+                try {
+                    const i18n = JSON.parse(i18nData);
+                    const artistName = i18n.zh ? i18n.zh['artist-name'] : '未设置';
+                    document.getElementById('i18n-data').innerHTML = `<p>艺术家姓名: ${artistName}</p><pre>${JSON.stringify(i18n.zh, null, 2).substring(0, 500)}...</pre>`;
+                    log(`多语言数据加载成功: 艺术家姓名=${artistName}`);
+                } catch (e) {
+                    document.getElementById('i18n-data').innerHTML = `<span class="error">数据解析错误: ${e.message}</span>`;
+                }
+            } else {
+                document.getElementById('i18n-data').innerHTML = '<span class="error">无多语言数据</span>';
+                log('localStorage中没有i18n_data');
+            }
+            
+            // 检测页面元素
+            checkElements();
+        }
+        
+        function checkElements() {
+            let elementsHtml = '<ul>';
+            
+            // 检查艺术家姓名元素
+            const artistNameElements = document.querySelectorAll('[data-i18n="artist-name"]');
+            elementsHtml += `<li>艺术家姓名元素: ${artistNameElements.length} 个`;
+            if (artistNameElements.length > 0) {
+                elementsHtml += ` (内容: "${artistNameElements[0].textContent}")`;
+            }
+            elementsHtml += '</li>';
+            
+            // 检查邮箱元素
+            const emailElement = document.getElementById('contact-email-address');
+            elementsHtml += `<li>邮箱元素: ${emailElement ? '找到' : '未找到'}`;
+            if (emailElement) {
+                elementsHtml += ` (内容: "${emailElement.textContent}")`;
+            }
+            elementsHtml += '</li>';
+            
+            // 检查个人简介元素
+            const aboutIntroElement = document.querySelector('[data-i18n="about-intro"]');
+            elementsHtml += `<li>个人简介元素: ${aboutIntroElement ? '找到' : '未找到'}`;
+            if (aboutIntroElement) {
+                elementsHtml += ` (长度: ${aboutIntroElement.textContent.length}字符)`;
+            }
+            elementsHtml += '</li>';
+            
+            elementsHtml += '</ul>';
+            document.getElementById('elements-check').innerHTML = elementsHtml;
+        }
+        
+        function testProfileUpdate() {
+            log('开始测试个人信息更新...');
+            
+            // 模拟更新个人信息
+            const testProfile = {
+                name: "测试艺术家",
+                bio: "这是一个测试的个人简介，用于验证数据同步功能是否正常工作。",
+                email: "test@example.com",
+                stats: {
+                    artworks: 99,
+                    exhibitions: 88,
+                    experience: 77
+                }
+            };
+            
+            // 保存到localStorage
+            localStorage.setItem('profile_data', JSON.stringify(testProfile));
+            log('测试数据已保存到localStorage');
+            
+            // 触发更新事件
+            window.dispatchEvent(new StorageEvent('storage', {
+                key: 'profile_data',
+                newValue: JSON.stringify(testProfile)
+            }));
+            
+            log('已触发storage事件');
+            
+            // 刷新数据显示
+            setTimeout(() => {
+                loadData();
+                log('测试完成，请检查数据是否更新');
+            }, 1000);
+        }
+        
+        function clearAllData() {
+            if (confirm('确定要清空所有localStorage数据吗？')) {
+                localStorage.clear();
+                log('所有localStorage数据已清空');
+                loadData();
+            }
+        }
+        
+        function initializeTestData() {
+            log('初始化测试数据...');
+            
+            // 初始化个人信息
+            const profile = {
+                name: "林士林",
+                bio: "我是一位专注于当代艺术创作的艺术家，致力于通过多样化的媒介探索人性、自然与社会的深层联系。我的作品融合了传统技法与现代理念，希望通过独特的视觉语言与观众产生共鸣。",
+                email: "linshilin.art@gmail.com",
+                stats: {
+                    artworks: 50,
+                    exhibitions: 5,
+                    experience: 3
+                }
+            };
+            localStorage.setItem('profile_data', JSON.stringify(profile));
+            
+            // 初始化基本多语言数据
+            const i18n = {
+                zh: {
+                    'artist-name': '林士林',
+                    'about-intro': '我是一位专注于当代艺术创作的艺术家，致力于通过多样化的媒介探索人性、自然与社会的深层联系。'
+                }
+            };
+            localStorage.setItem('i18n_data', JSON.stringify(i18n));
+            
+            log('测试数据初始化完成');
+            loadData();
+        }
+        
+        // 页面加载时自动加载数据
+        window.onload = function() {
+            log('调试页面加载完成');
+            loadData();
+        };
+    </script>
+</body>
+</html>
