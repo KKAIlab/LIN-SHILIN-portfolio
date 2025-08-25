@@ -334,7 +334,10 @@ class DataManager {
     
     setArtworks(artworks) {
         localStorage.setItem(this.storageKeys.artworks, JSON.stringify(artworks));
-        this.updateLastModified();
+        // 直接更新时间戳，避免递归
+        const config = this.getSiteConfig() || {};
+        config.lastUpdated = new Date().toISOString();
+        localStorage.setItem(this.storageKeys.siteConfig, JSON.stringify(config));
     }
     
     addArtwork(artwork) {
@@ -377,7 +380,10 @@ class DataManager {
     
     setProfile(profile) {
         localStorage.setItem(this.storageKeys.profile, JSON.stringify(profile));
-        this.updateLastModified();
+        // 直接更新时间戳，避免递归
+        const config = this.getSiteConfig() || {};
+        config.lastUpdated = new Date().toISOString();
+        localStorage.setItem(this.storageKeys.siteConfig, JSON.stringify(config));
     }
     
     updateProfile(updates) {
@@ -395,7 +401,10 @@ class DataManager {
     
     setI18nData(i18nData) {
         localStorage.setItem(this.storageKeys.i18n, JSON.stringify(i18nData));
-        this.updateLastModified();
+        // 直接更新时间戳，避免递归
+        const config = this.getSiteConfig() || {};
+        config.lastUpdated = new Date().toISOString();
+        localStorage.setItem(this.storageKeys.siteConfig, JSON.stringify(config));
     }
     
     updateI18nData(lang, key, value) {
@@ -415,25 +424,24 @@ class DataManager {
     }
     
     setSiteConfig(config, skipLastModified = false) {
-        localStorage.setItem(this.storageKeys.siteConfig, JSON.stringify(config));
-        if (!skipLastModified) {
-            this.updateLastModified();
+        // 如果config中没有lastUpdated且不跳过，则添加时间戳
+        if (!skipLastModified && !config.lastUpdated) {
+            config = { ...config, lastUpdated: new Date().toISOString() };
         }
+        localStorage.setItem(this.storageKeys.siteConfig, JSON.stringify(config));
     }
     
     updateSiteConfig(updates) {
         const config = this.getSiteConfig();
-        const updatedConfig = { ...config, ...updates };
-        this.setSiteConfig(updatedConfig, false);
+        const updatedConfig = { ...config, ...updates, lastUpdated: new Date().toISOString() };
+        localStorage.setItem(this.storageKeys.siteConfig, JSON.stringify(updatedConfig));
         return updatedConfig;
     }
     
-    // 更新最后修改时间
+    // 更新最后修改时间 - 已废弃，直接在各方法中处理时间戳
     updateLastModified() {
-        const config = this.getSiteConfig();
-        const updatedConfig = { ...config, lastUpdated: new Date().toISOString() };
-        // 直接保存，跳过递归调用
-        localStorage.setItem(this.storageKeys.siteConfig, JSON.stringify(updatedConfig));
+        // 此方法已废弃，避免递归调用
+        console.warn('⚠️ updateLastModified方法已废弃，请直接在相关方法中更新时间戳');
     }
     
     // 数据导出
@@ -457,9 +465,12 @@ class DataManager {
             if (data.artworks) this.setArtworks(data.artworks);
             if (data.profile) this.setProfile(data.profile);
             if (data.i18n) this.setI18nData(data.i18n);
-            if (data.siteConfig) this.setSiteConfig(data.siteConfig);
+            if (data.siteConfig) this.setSiteConfig(data.siteConfig, true);
             
-            this.updateLastModified();
+            // 直接更新时间戳，避免递归
+            const config = this.getSiteConfig() || {};
+            config.lastUpdated = new Date().toISOString();
+            localStorage.setItem(this.storageKeys.siteConfig, JSON.stringify(config));
             return true;
         } catch (error) {
             console.error('数据导入失败:', error);
