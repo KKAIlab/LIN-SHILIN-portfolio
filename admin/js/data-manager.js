@@ -414,21 +414,26 @@ class DataManager {
         return data ? JSON.parse(data) : null;
     }
     
-    setSiteConfig(config) {
+    setSiteConfig(config, skipLastModified = false) {
         localStorage.setItem(this.storageKeys.siteConfig, JSON.stringify(config));
-        this.updateLastModified();
+        if (!skipLastModified) {
+            this.updateLastModified();
+        }
     }
     
     updateSiteConfig(updates) {
         const config = this.getSiteConfig();
         const updatedConfig = { ...config, ...updates };
-        this.setSiteConfig(updatedConfig);
+        this.setSiteConfig(updatedConfig, false);
         return updatedConfig;
     }
     
     // 更新最后修改时间
     updateLastModified() {
-        this.updateSiteConfig({ lastUpdated: new Date().toISOString() });
+        const config = this.getSiteConfig();
+        const updatedConfig = { ...config, lastUpdated: new Date().toISOString() };
+        // 直接保存，跳过递归调用
+        localStorage.setItem(this.storageKeys.siteConfig, JSON.stringify(updatedConfig));
     }
     
     // 数据导出
