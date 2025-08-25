@@ -263,6 +263,58 @@
         </div>
     </div>
 
+    <!-- 紧急语言切换备用脚本 -->
+    <script>
+        // 紧急备用语言切换函数
+        window.emergencyLanguageSwitch = function(lang) {
+            console.log('🚨 使用紧急备用语言切换:', lang);
+            
+            // 直接更新按钮状态
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('data-lang') === lang) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // 保存语言偏好
+            try {
+                localStorage.setItem('preferredLanguage', lang);
+            } catch (e) {
+                console.warn('保存语言偏好失败:', e);
+            }
+            
+            // 调用主要语言切换函数
+            if (window.switchLanguage && typeof window.switchLanguage === 'function') {
+                window.switchLanguage(lang);
+            } else {
+                console.warn('主要语言切换函数不可用，等待加载...');
+                setTimeout(() => {
+                    if (window.switchLanguage) {
+                        window.switchLanguage(lang);
+                    }
+                }, 1000);
+            }
+        };
+        
+        // 页面加载后添加备用事件监听器
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                const langButtons = document.querySelectorAll('.lang-btn');
+                langButtons.forEach(button => {
+                    const lang = button.getAttribute('data-lang');
+                    if (lang && !button.getAttribute('data-emergency-bound')) {
+                        button.addEventListener('click', function() {
+                            window.emergencyLanguageSwitch(lang);
+                        });
+                        button.setAttribute('data-emergency-bound', 'true');
+                        console.log('✅ 紧急绑定语言按钮:', lang);
+                    }
+                });
+            }, 2000); // 2秒后执行，确保主脚本有机会先运行
+        });
+    </script>
+    
     <!-- JavaScript -->
     <script src="./js/debug-monitor.js"></script>
     <script src="./js/i18n.js"></script>

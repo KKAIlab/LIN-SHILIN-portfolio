@@ -209,93 +209,175 @@ function getText(key, lang = currentLanguage) {
     return i18n[lang] && i18n[lang][key] ? i18n[lang][key] : key;
 }
 
-// 主要语言切换函数
+// 主要语言切换函数 - 增强错误处理版本
 function switchLanguage(lang) {
     console.log(`🌐 切换语言到: ${lang}`);
     
-    // 验证语言参数
-    if (!['zh', 'en', 'ja'].includes(lang)) {
-        console.error('❌ 不支持的语言:', lang);
-        return;
-    }
-    
-    // 防止重复切换
-    if (currentLanguage === lang) {
-        console.log('✅ 已经是当前语言');
-        return;
-    }
-    
-    // 更新状态
-    currentLanguage = lang;
-    window.currentLanguage = lang;
-    
-    // 获取个人信息数据
-    const profileData = getProfileData();
-    
-    // 更新所有多语言元素
-    const elements = document.querySelectorAll('[data-i18n]');
-    console.log(`🔍 找到 ${elements.length} 个多语言元素`);
-    
-    elements.forEach(element => {
-        const key = element.getAttribute('data-i18n');
-        let newText = getText(key, lang);
+    try {
+        // 验证语言参数
+        if (!lang || typeof lang !== 'string') {
+            console.error('❌ 语言参数无效:', lang);
+            return false;
+        }
         
-        // 检查是否需要使用个人信息覆盖
-        if (profileData) {
-            if (key === 'artist-name' && profileData.name) {
-                newText = profileData.name;
-            } else if (key === 'about-intro' && profileData.bio) {
-                newText = profileData.bio;
+        if (!['zh', 'en', 'ja'].includes(lang)) {
+            console.error('❌ 不支持的语言:', lang);
+            return false;
+        }
+        
+        // 防止重复切换
+        if (currentLanguage === lang) {
+            console.log('✅ 已经是当前语言');
+            return true;
+        }
+        
+        // 更新状态
+        currentLanguage = lang;
+        window.currentLanguage = lang;
+        
+        // 获取个人信息数据
+        const profileData = getProfileData();
+        
+        // 更新所有多语言元素
+        const elements = document.querySelectorAll('[data-i18n]');
+        console.log(`🔍 找到 ${elements.length} 个多语言元素`);
+        
+        let successCount = 0;
+        let errorCount = 0;
+        
+        elements.forEach((element, index) => {
+            try {
+                const key = element.getAttribute('data-i18n');
+                if (!key) {
+                    console.warn(`⚠️ 元素 ${index} 缺少data-i18n属性`);
+                    errorCount++;
+                    return;
+                }
+                
+                let newText = getText(key, lang);
+                
+                // 检查是否需要使用个人信息覆盖
+                if (profileData) {
+                    if (key === 'artist-name' && profileData.name) {
+                        newText = profileData.name;
+                    } else if (key === 'about-intro' && profileData.bio) {
+                        newText = profileData.bio;
+                    }
+                }
+                
+                // 安全地更新元素内容
+                if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                    element.placeholder = newText;
+                } else {
+                    element.textContent = newText;
+                }
+                
+                successCount++;
+            } catch (error) {
+                console.error(`❌ 更新元素 ${index} 失败:`, error);
+                errorCount++;
             }
+        });
+        
+        console.log(`📊 更新结果: 成功 ${successCount}, 失败 ${errorCount}`);
+        
+        // 安全地更新邮箱
+        try {
+            const emailElement = document.getElementById('contact-email-address');
+            if (emailElement && profileData && profileData.email) {
+                emailElement.textContent = profileData.email;
+            }
+        } catch (error) {
+            console.warn('⚠️ 更新邮箱失败:', error);
         }
         
-        // 更新元素内容
-        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
-            element.placeholder = newText;
-        } else {
-            element.textContent = newText;
+        // 安全地更新语言按钮状态
+        try {
+            updateLanguageButtonStates(lang);
+        } catch (error) {
+            console.warn('⚠️ 更新按钮状态失败:', error);
         }
-    });
-    
-    // 更新邮箱（特殊处理）
-    const emailElement = document.getElementById('contact-email-address');
-    if (emailElement && profileData && profileData.email) {
-        emailElement.textContent = profileData.email;
-    }
-    
-    // 更新语言按钮状态
-    document.querySelectorAll('.lang-btn').forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.getAttribute('data-lang') === lang) {
-            btn.classList.add('active');
+        
+        // 安全地更新页面元数据
+        try {
+            updatePageMetadata(lang);
+        } catch (error) {
+            console.warn('⚠️ 更新页面元数据失败:', error);
         }
-    });
-    
-    // 更新页面元数据
-    updatePageMetadata(lang);
-    
-    // 保存语言偏好
-    localStorage.setItem('preferredLanguage', lang);
-    
-    // 更新作品展示语言
-    if (window.renderArtworks && typeof window.renderArtworks === 'function') {
-        setTimeout(() => window.renderArtworks(), 100);
+        
+        // 安全地保存语言偏好
+        try {
+            if (typeof Storage !== 'undefined' && localStorage) {
+                localStorage.setItem('preferredLanguage', lang);
+            } else {
+                console.warn('⚠️ localStorage不可用，无法保存语言偏好');
+            }
+        } catch (error) {
+            console.warn('⚠️ 保存语言偏好失败:', error);
+        }
+        
+        // 安全地更新作品展示语言
+        try {
+            if (window.renderArtworks && typeof window.renderArtworks === 'function') {
+                setTimeout(() => window.renderArtworks(), 100);
+            }
+        } catch (error) {
+            console.warn('⚠️ 更新作品展示语言失败:', error);
+        }
+        
+        console.log(`✅ 语言切换完成: ${lang}`);
+        
+        // 触发语言切换事件
+        try {
+            const event = new CustomEvent('languageChanged', { 
+                detail: { language: lang, profile: profileData } 
+            });
+            window.dispatchEvent(event);
+        } catch (error) {
+            console.warn('⚠️ 触发语言切换事件失败:', error);
+        }
+        
+        return true;
+        
+    } catch (error) {
+        console.error('❌ 语言切换过程中发生严重错误:', error);
+        return false;
     }
-    
-    console.log(`✅ 语言切换完成: ${lang}`);
 }
 
-// 获取个人信息数据
-function getProfileData() {
-    const stored = localStorage.getItem('profile_data');
-    if (stored) {
+// 安全的语言按钮状态更新
+function updateLanguageButtonStates(lang) {
+    const langButtons = document.querySelectorAll('.lang-btn');
+    langButtons.forEach(btn => {
         try {
-            return JSON.parse(stored);
+            btn.classList.remove('active');
+            if (btn.getAttribute('data-lang') === lang) {
+                btn.classList.add('active');
+            }
         } catch (error) {
-            console.warn('⚠️ 解析个人信息失败');
+            console.warn('⚠️ 更新按钮状态失败:', error);
         }
+    });
+}
+
+// 安全获取个人信息数据
+function getProfileData() {
+    try {
+        if (typeof Storage === 'undefined' || !localStorage) {
+            console.warn('⚠️ localStorage不可用');
+            return null;
+        }
+        
+        const stored = localStorage.getItem('profile_data');
+        if (!stored) {
+            return null;
+        }
+        
+        return JSON.parse(stored);
+    } catch (error) {
+        console.warn('⚠️ 获取个人信息数据失败:', error);
+        return null;
     }
-    return null;
 }
 
 // 更新页面元数据
@@ -344,31 +426,106 @@ function initI18n() {
     console.log('✅ 多语言系统初始化完成');
 }
 
-// 绑定语言切换按钮事件
+// 安全绑定语言切换按钮事件
 function bindLanguageButtons() {
-    const langButtons = document.querySelectorAll('.lang-btn');
-    console.log(`🔘 绑定 ${langButtons.length} 个语言按钮事件`);
-    
-    langButtons.forEach(button => {
-        const lang = button.getAttribute('data-lang');
-        if (lang) {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                console.log(`🖱️ 用户点击语言按钮: ${lang}`);
-                switchLanguage(lang);
-            });
+    try {
+        const langButtons = document.querySelectorAll('.lang-btn');
+        console.log(`🔘 绑定 ${langButtons.length} 个语言按钮事件`);
+        
+        if (langButtons.length === 0) {
+            console.warn('⚠️ 没有找到语言按钮，延迟重试...');
+            setTimeout(bindLanguageButtons, 500);
+            return;
         }
-    });
+        
+        langButtons.forEach((button, index) => {
+            try {
+                const lang = button.getAttribute('data-lang');
+                if (!lang) {
+                    console.warn(`⚠️ 按钮 ${index} 缺少data-lang属性`);
+                    return;
+                }
+                
+                // 检查是否已经绑定过事件
+                if (button.getAttribute('data-bound') === 'true') {
+                    console.log(`⚠️ 按钮 ${lang} 已经绑定过事件，跳过`);
+                    return;
+                }
+                
+                // 添加事件监听器
+                button.addEventListener('click', function(e) {
+                    try {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log(`🖱️ 用户点击语言按钮: ${lang}`);
+                        
+                        // 立即更新按钮视觉状态
+                        document.querySelectorAll('.lang-btn').forEach(btn => {
+                            btn.classList.remove('active');
+                        });
+                        button.classList.add('active');
+                        
+                        // 执行语言切换
+                        const result = switchLanguage(lang);
+                        if (!result) {
+                            console.error(`❌ 语言切换失败: ${lang}`);
+                        }
+                    } catch (error) {
+                        console.error(`❌ 语言按钮点击处理失败:`, error);
+                    }
+                });
+                
+                // 标记已绑定
+                button.setAttribute('data-bound', 'true');
+                console.log(`✅ 成功绑定语言按钮: ${lang}`);
+            } catch (error) {
+                console.error(`❌ 绑定按钮 ${index} 失败:`, error);
+            }
+        });
+        
+        console.log('✅ 语言按钮事件绑定完成');
+    } catch (error) {
+        console.error('❌ 绑定语言按钮事件时发生错误:', error);
+    }
 }
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
     console.log('📄 DOM加载完成，准备初始化多语言系统');
     
-    // 短暂延迟确保所有脚本都已加载
-    setTimeout(() => {
+    try {
+        // 检查基本环境
+        if (typeof document === 'undefined') {
+            console.error('❌ document对象不可用');
+            return;
+        }
+        
+        // 立即初始化，不延迟
         initI18n();
-    }, 100);
+        
+        // 确保按钮事件绑定成功，添加备用机制
+        setTimeout(() => {
+            console.log('🔄 检查语言按钮绑定状态...');
+            const langButtons = document.querySelectorAll('.lang-btn');
+            let hasClickHandler = false;
+            
+            langButtons.forEach(button => {
+                // 检查是否已有点击事件处理器
+                const hasHandler = button.onclick !== null || button.getAttribute('data-bound') === 'true';
+                if (hasHandler) {
+                    hasClickHandler = true;
+                }
+            });
+            
+            if (!hasClickHandler && langButtons.length > 0) {
+                console.warn('⚠️ 语言按钮事件可能未正确绑定，重试绑定...');
+                bindLanguageButtons();
+            }
+        }, 1000);
+        
+    } catch (error) {
+        console.error('❌ 初始化多语言系统时发生错误:', error);
+    }
 });
 
 // 导出全局变量和函数
