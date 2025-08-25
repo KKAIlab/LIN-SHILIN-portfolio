@@ -318,9 +318,23 @@
                     
                     <div class="form-group">
                         <label for="artwork-image">作品图片</label>
-                        <div class="image-upload">
-                            <input type="file" id="artwork-image-input" accept="image/*">
+                        <div class="image-upload-enhanced">
+                            <div class="upload-options">
+                                <label for="artwork-image-input" class="upload-btn btn btn-outline">
+                                    <span class="btn-icon">📁</span>
+                                    选择文件上传
+                                </label>
+                                <input type="file" id="artwork-image-input" accept="image/*" style="display: none;">
+                                
+                                <button type="button" class="upload-btn btn btn-outline" onclick="adminPanel.addImageFromUrl()">
+                                    <span class="btn-icon">🌐</span>
+                                    使用网络图片URL
+                                </button>
+                            </div>
                             <div id="image-preview" class="image-preview"></div>
+                            <div class="upload-tips">
+                                <small>支持 JPG、PNG、GIF、WebP 格式，最大 5MB</small>
+                            </div>
                         </div>
                     </div>
                     

@@ -489,3 +489,8 @@ class DataManager {
 
 // 创建全局数据管理器实例
 const dataManager = new DataManager();
+
+// 确保全局可访问
+window.dataManager = dataManager;
+
+console.log('✅ 数据管理器已创建并暴露为全局变量');

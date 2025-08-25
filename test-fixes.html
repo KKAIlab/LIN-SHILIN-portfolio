@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>修复测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .lang-btn {
+            padding: 10px 20px;
+            margin: 5px;
+            border: 2px solid #007bff;
+            background: white;
+            color: #007bff;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .lang-btn:hover, .lang-btn.active {
+            background: #007bff;
+            color: white;
+        }
+        .test-text {
+            margin: 15px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+    </style>
+</head>
+<body>
+    <h1>林士林作品集 - 修复测试</h1>
+    
+    <div class="test-section">
+        <h2>🌐 多语言切换测试</h2>
+        <div class="language-switcher">
+            <button class="lang-btn" data-lang="zh">中文</button>
+            <button class="lang-btn" data-lang="en">English</button>
+            <button class="lang-btn" data-lang="ja">日本語</button>
+        </div>
+        
+        <div class="test-text">
+            <p><strong>艺术家姓名:</strong> <span data-i18n="artist-name">林士林</span></p>
+            <p><strong>导航 - 首页:</strong> <span data-i18n="nav-home">首页</span></p>
+            <p><strong>导航 - 作品:</strong> <span data-i18n="nav-gallery">作品</span></p>
+            <p><strong>主标语:</strong> <span data-i18n="hero-subtitle">探索色彩与形态的无限可能</span></p>
+        </div>
+        
+        <div id="language-status" class="info">
+            当前语言: <span id="current-lang">未设置</span>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📊 后台数据测试</h2>
+        <div id="data-status">
+            <p>数据管理器状态: <span id="datamanager-status" class="info">检查中...</span></p>
+            <p>作品数量: <span id="artworks-count" class="info">--</span></p>
+            <p>多语言数据: <span id="i18n-status" class="info">--</span></p>
+        </div>
+        
+        <button id="test-data-btn" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            测试数据操作
+        </button>
+    </div>
+    
+    <div class="test-section">
+        <h2>🔗 相关链接</h2>
+        <p><a href="index.html" target="_blank">前台主页</a></p>
+        <p><a href="admin/login.html" target="_blank">后台登录</a></p>
+        <p><a href="admin/dashboard.html" target="_blank">后台管理</a></p>
+    </div>
+    
+    <div class="test-section">
+        <h2>📝 修复说明</h2>
+        <ul>
+            <li class="success">✅ 移除了HTML中的内联onclick事件冲突</li>
+            <li class="success">✅ 统一了语言切换逻辑到i18n.js</li>
+            <li class="success">✅ 移除了simple-i18n-fix.js避免多重修复冲突</li>
+            <li class="success">✅ 修复了后台data-manager.js的全局变量暴露问题</li>
+            <li class="success">✅ 优化了后台作品管理的错误处理和验证</li>
+            <li class="success">✅ 增强了图片上传功能和压缩处理</li>
+        </ul>
+    </div>
+
+    <script src="./js/debug-monitor.js"></script>
+    <script src="./js/i18n.js"></script>
+    
+    <script>
+        // 测试脚本
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🧪 开始修复测试...');
+            
+            // 更新当前语言显示
+            function updateLanguageStatus() {
+                const currentLangSpan = document.getElementById('current-lang');
+                currentLangSpan.textContent = window.currentLanguage || '未知';
+            }
+            
+            // 监听语言切换事件
+            window.addEventListener('languageChanged', function(e) {
+                console.log('🎉 语言切换事件触发:', e.detail);
+                updateLanguageStatus();
+            });
+            
+            // 初始化语言状态
+            setTimeout(updateLanguageStatus, 1000);
+            
+            // 测试数据管理
+            document.getElementById('test-data-btn').addEventListener('click', function() {
+                console.log('🧪 测试数据操作...');
+                
+                // 检查数据管理器
+                const dataManagerStatus = document.getElementById('datamanager-status');
+                if (typeof window.dataManager !== 'undefined') {
+                    dataManagerStatus.textContent = '✅ 可用';
+                    dataManagerStatus.className = 'success';
+                    
+                    // 获取作品数量
+                    try {
+                        const artworks = window.dataManager ? window.dataManager.getArtworks() : [];
+                        document.getElementById('artworks-count').textContent = artworks.length + ' 件';
+                        document.getElementById('artworks-count').className = 'success';
+                    } catch (e) {
+                        document.getElementById('artworks-count').textContent = '获取失败: ' + e.message;
+                        document.getElementById('artworks-count').className = 'error';
+                    }
+                } else {
+                    dataManagerStatus.textContent = '❌ 不可用';
+                    dataManagerStatus.className = 'error';
+                }
+                
+                // 检查多语言数据
+                const i18nStatus = document.getElementById('i18n-status');
+                if (typeof window.i18n !== 'undefined') {
+                    const langs = Object.keys(window.i18n);
+                    i18nStatus.textContent = `✅ ${langs.join(', ')} (${langs.length}种语言)`;
+                    i18nStatus.className = 'success';
+                } else {
+                    i18nStatus.textContent = '❌ 不可用';
+                    i18nStatus.className = 'error';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

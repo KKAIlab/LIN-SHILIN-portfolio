@@ -75,6 +75,15 @@ class AdminPanel {
             this.importData(e);
         });
         
+        // 批量操作事件
+        document.getElementById('select-all-btn').addEventListener('click', () => {
+            this.toggleSelectAll();
+        });
+        
+        document.getElementById('delete-selected-btn').addEventListener('click', () => {
+            this.deleteSelectedArtworks();
+        });
+        
         document.getElementById('reset-data-btn').addEventListener('click', () => {
             this.resetData();
         });
@@ -160,53 +169,163 @@ class AdminPanel {
         document.getElementById('sketches-count').textContent = stats.sketches;
     }
     
-    // 加载作品列表
+    // 优化的作品列表加载
     loadArtworks(searchTerm = '', category = '') {
-        const artworks = dataManager.getArtworks();
-        const i18nData = dataManager.getI18nData();
-        const grid = document.getElementById('artworks-grid');
+        console.log('🎨 开始加载作品列表...');
         
-        // 过滤作品
-        let filteredArtworks = artworks;
-        
-        if (searchTerm) {
-            filteredArtworks = filteredArtworks.filter(artwork => {
-                const title = i18nData.zh[artwork.titleKey] || '';
-                const desc = i18nData.zh[artwork.descriptionKey] || '';
-                return title.includes(searchTerm) || desc.includes(searchTerm);
+        try {
+            const artworks = dataManager.getArtworks();
+            const i18nData = dataManager.getI18nData();
+            const grid = document.getElementById('artworks-grid');
+            
+            if (!artworks || artworks.length === 0) {
+                console.warn('⚠️ 没有作品数据');
+                grid.innerHTML = '<p style="text-align: center; color: #718096; padding: 40px;">暂无作品数据</p>';
+                return;
+            }
+            
+            if (!i18nData) {
+                console.error('❌ 多语言数据缺失');
+                grid.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 40px;">多语言数据加载失败</p>';
+                return;
+            }
+            
+            console.log(`📊 共找到 ${artworks.length} 件作品`);
+            
+            // 过滤作品
+            let filteredArtworks = [...artworks]; // 创建副本避免修改原数组
+            
+            if (searchTerm && searchTerm.trim()) {
+                filteredArtworks = filteredArtworks.filter(artwork => {
+                    try {
+                        const title = i18nData.zh?.[artwork.titleKey] || artwork.titleKey || '';
+                        const desc = i18nData.zh?.[artwork.descriptionKey] || artwork.descriptionKey || '';
+                        const medium = artwork.details?.medium || '';
+                        
+                        const searchText = searchTerm.toLowerCase();
+                        return title.toLowerCase().includes(searchText) || 
+                               desc.toLowerCase().includes(searchText) ||
+                               medium.toLowerCase().includes(searchText);
+                    } catch (error) {
+                        console.warn('⚠️ 搜索过滤时出错:', error);
+                        return false;
+                    }
+                });
+            }
+            
+            if (category && category !== 'all') {
+                filteredArtworks = filteredArtworks.filter(artwork => artwork.category === category);
+            }
+            
+            console.log(`🔍 过滤后显示 ${filteredArtworks.length} 件作品`);
+            
+            // 清空网格
+            grid.innerHTML = '';
+            
+            // 渲染作品卡片
+            filteredArtworks.forEach(artwork => {
+                try {
+                    const title = i18nData.zh?.[artwork.titleKey] || artwork.titleKey || '未命名';
+                    const desc = i18nData.zh?.[artwork.descriptionKey] || artwork.descriptionKey || '';
+                    
+                    const card = this.createArtworkCard(artwork, title, desc);
+                    grid.appendChild(card);
+                } catch (error) {
+                    console.error('❌ 渲染作品卡片失败:', error, artwork);
+                }
             });
-        }
-        
-        if (category) {
-            filteredArtworks = filteredArtworks.filter(artwork => artwork.category === category);
-        }
-        
-        grid.innerHTML = '';
-        
-        filteredArtworks.forEach(artwork => {
-            const title = i18nData.zh[artwork.titleKey] || '未命名';
-            const desc = i18nData.zh[artwork.descriptionKey] || '';
             
-            const card = document.createElement('div');
-            card.className = 'artwork-card';
-            card.innerHTML = `
-                <img src="${artwork.image}" alt="${title}" class="artwork-image" loading="lazy">
-                <div class="artwork-info">
-                    <h3 class="artwork-title">${title}</h3>
-                    <div class="artwork-meta">分类：${this.getCategoryName(artwork.category)} | ${artwork.details.year}</div>
-                    <div class="artwork-actions">
-                        <button class="btn btn-primary btn-small" onclick="adminPanel.editArtwork(${artwork.id})">编辑</button>
-                        <button class="btn btn-danger btn-small" onclick="adminPanel.deleteArtwork(${artwork.id})">删除</button>
-                    </div>
+            if (filteredArtworks.length === 0) {
+                const noResultsMsg = searchTerm || category ? 
+                    '没有找到符合条件的作品' : 
+                    '暂无作品数据';
+                grid.innerHTML = `<p style="text-align: center; color: #718096; padding: 40px;">${noResultsMsg}</p>`;
+            }
+            
+            console.log('✅ 作品列表加载完成');
+            
+        } catch (error) {
+            console.error('❌ 加载作品列表失败:', error);
+            const grid = document.getElementById('artworks-grid');
+            if (grid) {
+                grid.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 40px;">作品列表加载失败，请刷新重试</p>';
+            }
+        }
+    }
+    
+    // 创建作品卡片的辅助函数
+    createArtworkCard(artwork, title, desc) {
+        const card = document.createElement('div');
+        card.className = 'artwork-card';
+        card.dataset.artworkId = artwork.id;
+        
+        // 安全的图片URL处理
+        const imageUrl = artwork.image || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuaXoOWbvueJhzwvdGV4dD48L3N2Zz4=';
+        
+        card.innerHTML = `
+            <div class="artwork-checkbox">
+                <input type="checkbox" class="artwork-select" data-artwork-id="${artwork.id}" onchange="adminPanel.updateBatchActions()">
+            </div>
+            <div class="artwork-image-container">
+                <img src="${imageUrl}" alt="${title}" class="artwork-image" loading="lazy" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzk5YTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuWbvueJh+WKoOi9veWksei0pTwvdGV4dD48L3N2Zz4='">
+                <div class="artwork-overlay">
+                    <button class="btn btn-sm btn-primary" onclick="adminPanel.previewArtwork(${artwork.id})" title="预览">👁</button>
                 </div>
-            `;
-            
-            grid.appendChild(card);
+            </div>
+            <div class="artwork-info">
+                <h3 class="artwork-title" title="${title}">${title}</h3>
+                <div class="artwork-meta">
+                    <span class="category-badge category-${artwork.category}">${this.getCategoryName(artwork.category)}</span>
+                    <span class="year-badge">${artwork.details?.year || '未知'}</span>
+                </div>
+                <div class="artwork-description" title="${desc}">${desc.length > 50 ? desc.substring(0, 50) + '...' : desc}</div>
+                <div class="artwork-details">
+                    <small>${artwork.details?.medium || '未知媒介'} | ${artwork.details?.size || '未知尺寸'}</small>
+                </div>
+                <div class="artwork-actions">
+                    <button class="btn btn-primary btn-small" onclick="adminPanel.editArtwork(${artwork.id})" title="编辑作品">
+                        ✏️ 编辑
+                    </button>
+                    <button class="btn btn-danger btn-small" onclick="adminPanel.deleteArtwork(${artwork.id})" title="删除作品">
+                        🗑️ 删除
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        return card;
+    }
+    
+    // 预览作品功能
+    previewArtwork(id) {
+        const artwork = dataManager.getArtworkById(id);
+        if (!artwork) return;
+        
+        const i18nData = dataManager.getI18nData();
+        const title = i18nData?.zh?.[artwork.titleKey] || '未命名';
+        
+        // 创建简单的预览模态框
+        const modal = document.createElement('div');
+        modal.className = 'preview-modal';
+        modal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center;
+            z-index: 10000; cursor: pointer;
+        `;
+        
+        modal.innerHTML = `
+            <div class="preview-content" style="max-width: 80%; max-height: 80%; text-align: center;">
+                <img src="${artwork.image}" alt="${title}" style="max-width: 100%; max-height: 70vh; border-radius: 8px;">
+                <h3 style="color: white; margin-top: 20px;">${title}</h3>
+                <p style="color: #ccc; font-size: 14px;">点击任意处关闭</p>
+            </div>
+        `;
+        
+        modal.addEventListener('click', () => {
+            document.body.removeChild(modal);
         });
         
-        if (filteredArtworks.length === 0) {
-            grid.innerHTML = '<p style="text-align: center; color: #718096; padding: 40px;">没有找到符合条件的作品</p>';
-        }
+        document.body.appendChild(modal);
     }
     
     // 获取分类名称
@@ -278,114 +397,467 @@ class AdminPanel {
         document.getElementById('image-preview').innerHTML = '';
     }
     
-    // 处理图片上传
+    // 优化的图片上传处理
     handleImageUpload(e) {
         const file = e.target.files[0];
-        if (!file) return;
-        
-        if (!file.type.startsWith('image/')) {
-            alert('请选择图片文件');
+        if (!file) {
+            console.log('📸 用户取消了文件选择');
             return;
         }
         
+        console.log('📸 开始处理图片上传:', file.name, '大小:', (file.size / 1024 / 1024).toFixed(2) + 'MB');
+        
+        // 验证文件类型
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(file.type.toLowerCase())) {
+            this.showNotification('请选择图片文件（支持 JPG, PNG, GIF, WebP）', 'error');
+            e.target.value = ''; // 清空input
+            return;
+        }
+        
+        // 验证文件大小（最大10MB，增加限制）
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.size > maxSize) {
+            this.showNotification('图片文件大小不能超过10MB', 'error');
+            e.target.value = '';
+            return;
+        }
+        
+        // 显示上传进度
+        this.showUploadProgress(true);
+        
         const reader = new FileReader();
-        reader.onload = (e) => {
-            const img = document.createElement('img');
-            img.src = e.target.result;
-            img.style.maxWidth = '100%';
-            img.style.maxHeight = '200px';
-            img.style.borderRadius = '8px';
-            
-            document.getElementById('image-preview').innerHTML = '';
-            document.getElementById('image-preview').appendChild(img);
+        
+        reader.onload = (event) => {
+            try {
+                const imageUrl = event.target.result;
+                
+                // 验证base64数据完整性
+                if (!imageUrl || !imageUrl.startsWith('data:image/')) {
+                    throw new Error('图片数据格式无效');
+                }
+                
+                // 预处理图片（可选：压缩大图片）
+                this.processAndDisplayImage(imageUrl, file);
+                
+            } catch (error) {
+                console.error('❌ 图片处理失败:', error);
+                this.showNotification('图片处理失败：' + error.message, 'error');
+                this.showUploadProgress(false);
+            }
         };
+        
+        reader.onerror = (error) => {
+            console.error('❌ 图片读取失败:', error);
+            this.showNotification('图片读取失败，请重试', 'error');
+            this.showUploadProgress(false);
+        };
+        
+        // 开始读取文件
         reader.readAsDataURL(file);
     }
     
-    // 保存作品
+    // 处理并显示图片
+    processAndDisplayImage(imageUrl, file) {
+        // 检查是否需要压缩（大于2MB的图片）
+        if (file.size > 2 * 1024 * 1024) {
+            console.log('🔄 图片较大，进行压缩处理...');
+            this.compressImage(imageUrl, file, (compressedUrl, compressedFile) => {
+                this.finalizeImageUpload(compressedUrl, compressedFile || file);
+            });
+        } else {
+            this.finalizeImageUpload(imageUrl, file);
+        }
+    }
+    
+    // 完成图片上传处理
+    finalizeImageUpload(imageUrl, file) {
+        this.displayImagePreview(imageUrl, file.name);
+        
+        // 保存图片数据到临时存储
+        this.tempImageData = {
+            url: imageUrl,
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            originalSize: file.size
+        };
+        
+        this.showUploadProgress(false);
+        this.showNotification('图片上传成功！', 'success');
+        console.log('✅ 图片上传处理完成');
+    }
+    
+    // 图片压缩功能（可选）
+    compressImage(imageUrl, file, callback) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        img.onload = () => {
+            // 计算压缩后的尺寸（保持宽高比）
+            let { width, height } = img;
+            const maxDimension = 1920; // 最大尺寸
+            
+            if (width > maxDimension || height > maxDimension) {
+                if (width > height) {
+                    height = (height * maxDimension) / width;
+                    width = maxDimension;
+                } else {
+                    width = (width * maxDimension) / height;
+                    height = maxDimension;
+                }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            // 绘制压缩后的图片
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // 输出压缩后的图片
+            const quality = 0.8; // 压缩质量
+            const compressedUrl = canvas.toDataURL(file.type, quality);
+            
+            console.log('🗜️ 图片压缩完成:', 
+                '原始大小:', (file.size / 1024 / 1024).toFixed(2) + 'MB',
+                '压缩后大小:', (compressedUrl.length * 0.75 / 1024 / 1024).toFixed(2) + 'MB'
+            );
+            
+            callback(compressedUrl, null);
+        };
+        
+        img.onerror = () => {
+            console.warn('⚠️ 图片压缩失败，使用原图');
+            callback(imageUrl, file);
+        };
+        
+        img.src = imageUrl;
+    }
+    
+    // 显示上传进度
+    showUploadProgress(show) {
+        let progressEl = document.getElementById('upload-progress');
+        
+        if (show) {
+            if (!progressEl) {
+                progressEl = document.createElement('div');
+                progressEl.id = 'upload-progress';
+                progressEl.style.cssText = `
+                    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                    background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    z-index: 10001; text-align: center;
+                `;
+                progressEl.innerHTML = `
+                    <div style="margin-bottom: 10px;">处理图片中...</div>
+                    <div style="width: 200px; height: 4px; background: #f0f0f0; border-radius: 2px; overflow: hidden;">
+                        <div style="width: 100%; height: 100%; background: #4CAF50; animation: progress 1.5s ease-in-out infinite;"></div>
+                    </div>
+                    <style>
+                        @keyframes progress {
+                            0% { transform: translateX(-100%); }
+                            100% { transform: translateX(100%); }
+                        }
+                    </style>
+                `;
+                document.body.appendChild(progressEl);
+            }
+        } else {
+            if (progressEl) {
+                document.body.removeChild(progressEl);
+            }
+        }
+    }
+    
+    // 显示图片预览
+    displayImagePreview(imageUrl, fileName) {
+        const previewContainer = document.getElementById('image-preview');
+        previewContainer.innerHTML = `
+            <div class="image-preview-wrapper">
+                <img src="${imageUrl}" style="max-width: 100%; max-height: 200px; border-radius: 8px; object-fit: cover;">
+                <div class="image-info">
+                    <p class="image-name">${fileName}</p>
+                    <div class="preview-actions">
+                        <button type="button" class="btn btn-sm btn-outline" onclick="adminPanel.removeImagePreview()">移除</button>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="adminPanel.replaceImage()">替换</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // 移除图片预览
+    removeImagePreview() {
+        document.getElementById('image-preview').innerHTML = '';
+        document.getElementById('artwork-image-input').value = '';
+        this.tempImageData = null;
+        console.log('🗑️ 图片预览已移除');
+    }
+    
+    // 替换图片
+    replaceImage() {
+        document.getElementById('artwork-image-input').click();
+    }
+    
+    // 添加URL图片支持
+    addImageFromUrl() {
+        const url = prompt('请输入图片URL:');
+        if (!url) return;
+        
+        // 验证URL格式
+        try {
+            new URL(url);
+        } catch (e) {
+            alert('请输入有效的URL地址');
+            return;
+        }
+        
+        // 创建图片元素验证URL是否有效
+        const img = new Image();
+        img.onload = () => {
+            this.displayImagePreview(url, '外部图片');
+            this.tempImageData = {
+                url: url,
+                name: '外部图片',
+                type: 'url',
+                isExternal: true
+            };
+            console.log('✅ 外部图片URL验证成功');
+        };
+        
+        img.onerror = () => {
+            alert('无法加载该图片URL，请检查地址是否正确');
+        };
+        
+        img.src = url;
+    }
+    
+    // 优化的作品保存功能
     saveArtwork() {
         console.log('🚀 开始保存作品...');
         
-        const form = document.getElementById('artwork-form');
-        const formData = new FormData(form);
-        
-        // 获取表单数据
-        const titleZh = document.getElementById('artwork-title-zh').value.trim();
-        const titleEn = document.getElementById('artwork-title-en').value.trim();
-        const titleJa = document.getElementById('artwork-title-ja').value.trim();
-        const descZh = document.getElementById('artwork-desc-zh').value.trim();
-        const descEn = document.getElementById('artwork-desc-en').value.trim();
-        const descJa = document.getElementById('artwork-desc-ja').value.trim();
-        const category = document.getElementById('artwork-category').value;
-        const medium = document.getElementById('artwork-medium').value.trim();
-        const size = document.getElementById('artwork-size').value.trim();
-        const year = document.getElementById('artwork-year').value.trim();
-        
-        console.log('📝 表单数据:', { titleZh, category, medium, size, year });
-        
-        // 验证必填字段
-        if (!titleZh || !category) {
-            console.error('❌ 必填字段验证失败');
-            alert('请填写必填字段：中文标题和分类');
-            return;
-        }
-        
-        // 增强的图片获取逻辑
-        let imageUrl = '';
-        const imagePreviewContainer = document.getElementById('image-preview');
-        
-        console.log('🖼️ 检查图片预览容器:', imagePreviewContainer);
-        
-        // 方法1: 从预览容器中获取img标签
-        const imagePreview = imagePreviewContainer?.querySelector('img');
-        if (imagePreview && imagePreview.src) {
-            imageUrl = imagePreview.src;
-            console.log('✅ 从预览获取图片URL:', imageUrl.substring(0, 100) + '...');
-        }
-        
-        // 方法2: 从文件输入获取 
-        if (!imageUrl) {
-            const fileInput = document.getElementById('artwork-image-input');
-            if (fileInput && fileInput.files && fileInput.files[0]) {
-                // 重新读取文件
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    imageUrl = e.target.result;
-                    console.log('✅ 从文件输入获取图片URL');
-                    this.continueArtworkSave(titleZh, titleEn, titleJa, descZh, descEn, descJa, category, medium, size, year, imageUrl);
-                };
-                reader.readAsDataURL(fileInput.files[0]);
-                return; // 异步处理，直接返回
+        try {
+            // 显示保存状态
+            this.showSaveProgress(true);
+            
+            const form = document.getElementById('artwork-form');
+            if (!form) {
+                throw new Error('找不到表单元素');
             }
+            
+            // 获取并验证表单数据
+            const formData = this.extractFormData();
+            const validationResult = this.validateFormData(formData);
+            
+            if (!validationResult.isValid) {
+                this.showNotification(validationResult.message, 'error');
+                this.showSaveProgress(false);
+                return;
+            }
+            
+            console.log('📝 表单验证通过:', formData);
+            
+            // 获取图片URL
+            const imageUrl = this.getArtworkImageUrl();
+            if (!imageUrl) {
+                this.showNotification('请选择作品图片', 'error');
+                this.showSaveProgress(false);
+                return;
+            }
+            
+            console.log('🖼️ 图片URL获取成功，长度:', imageUrl.length);
+            
+            // 执行保存
+            this.executeArtworkSave(formData, imageUrl);
+            
+        } catch (error) {
+            console.error('❌ 保存作品时发生错误:', error);
+            this.showNotification('保存失败：' + error.message, 'error');
+            this.showSaveProgress(false);
+        }
+    }
+    
+    // 提取表单数据
+    extractFormData() {
+        return {
+            titleZh: this.getInputValue('artwork-title-zh'),
+            titleEn: this.getInputValue('artwork-title-en'), 
+            titleJa: this.getInputValue('artwork-title-ja'),
+            descZh: this.getInputValue('artwork-desc-zh'),
+            descEn: this.getInputValue('artwork-desc-en'),
+            descJa: this.getInputValue('artwork-desc-ja'),
+            category: this.getInputValue('artwork-category'),
+            medium: this.getInputValue('artwork-medium'),
+            size: this.getInputValue('artwork-size'),
+            year: this.getInputValue('artwork-year')
+        };
+    }
+    
+    // 安全获取输入值
+    getInputValue(id) {
+        const element = document.getElementById(id);
+        return element ? element.value.trim() : '';
+    }
+    
+    // 验证表单数据
+    validateFormData(data) {
+        // 必填字段验证
+        if (!data.titleZh) {
+            return { isValid: false, message: '请填写中文标题' };
         }
         
-        // 方法3: 编辑模式下保留原图片
-        if (!imageUrl && this.currentEditingArtwork) {
+        if (!data.category) {
+            return { isValid: false, message: '请选择作品分类' };
+        }
+        
+        // 分类验证
+        const allowedCategories = ['paintings', 'digital', 'sketches'];
+        if (!allowedCategories.includes(data.category)) {
+            return { isValid: false, message: '无效的作品分类' };
+        }
+        
+        // 年份验证（如果填写）
+        if (data.year && (!/^\d{4}$/.test(data.year) || parseInt(data.year) < 1900 || parseInt(data.year) > new Date().getFullYear() + 1)) {
+            return { isValid: false, message: '请输入有效的年份（1900-' + (new Date().getFullYear() + 1) + '）' };
+        }
+        
+        // 标题长度验证
+        if (data.titleZh.length > 100) {
+            return { isValid: false, message: '中文标题长度不能超过100个字符' };
+        }
+        
+        return { isValid: true };
+    }
+    
+    // 获取作品图片URL
+    getArtworkImageUrl() {
+        // 优先级1：临时上传的图片
+        if (this.tempImageData && this.tempImageData.url) {
+            console.log('✅ 使用临时上传的图片');
+            return this.tempImageData.url;
+        }
+        
+        // 优先级2：预览容器中的图片
+        const imagePreview = document.querySelector('#image-preview img');
+        if (imagePreview && imagePreview.src && !imagePreview.src.includes('data:image/svg+xml')) {
+            console.log('✅ 使用预览容器中的图片');
+            return imagePreview.src;
+        }
+        
+        // 优先级3：编辑模式下的原始图片
+        if (this.currentEditingArtwork) {
             const currentArtwork = dataManager.getArtworkById(this.currentEditingArtwork);
             if (currentArtwork && currentArtwork.image) {
-                imageUrl = currentArtwork.image;
-                console.log('✅ 从现有作品获取图片URL');
+                console.log('✅ 使用现有作品的图片');
+                return currentArtwork.image;
             }
         }
         
-        // 方法4: 检查预览容器的innerHTML
-        if (!imageUrl && imagePreviewContainer) {
-            const imgMatch = imagePreviewContainer.innerHTML.match(/src="([^"]+)"/);
-            if (imgMatch) {
-                imageUrl = imgMatch[1];
-                console.log('✅ 从HTML源码获取图片URL');
+        console.warn('⚠️ 未找到有效的图片URL');
+        return null;
+    }
+    
+    // 执行作品保存
+    executeArtworkSave(formData, imageUrl) {
+        try {
+            // 生成唯一的key
+            const timestamp = Date.now();
+            const titleKey = this.currentEditingArtwork ? 
+                dataManager.getArtworkById(this.currentEditingArtwork).titleKey :
+                `artwork-${timestamp}-title`;
+            const descKey = this.currentEditingArtwork ? 
+                dataManager.getArtworkById(this.currentEditingArtwork).descriptionKey :
+                `artwork-${timestamp}-desc`;
+            
+            console.log('🔑 生成键值:', { titleKey, descKey });
+            
+            // 更新多语言数据
+            this.updateI18nData(titleKey, descKey, formData);
+            
+            // 创建作品对象
+            const artwork = {
+                titleKey: titleKey,
+                descriptionKey: descKey,
+                category: formData.category,
+                image: imageUrl,
+                details: {
+                    medium: formData.medium || '未指定',
+                    size: formData.size || '未指定',
+                    year: formData.year || new Date().getFullYear().toString()
+                }
+            };
+            
+            // 保存作品
+            let savedArtwork;
+            if (this.currentEditingArtwork) {
+                savedArtwork = dataManager.updateArtwork(this.currentEditingArtwork, artwork);
+                console.log('📝 更新作品:', savedArtwork);
+            } else {
+                savedArtwork = dataManager.addArtwork(artwork);
+                console.log('➕ 添加新作品:', savedArtwork);
+            }
+            
+            if (!savedArtwork) {
+                throw new Error('作品保存失败，请检查数据');
+            }
+            
+            // 清理临时数据
+            this.tempImageData = null;
+            
+            // 显示成功消息
+            const message = this.currentEditingArtwork ? '作品更新成功！' : '作品添加成功！';
+            this.showNotification(message, 'success');
+            
+            // 关闭模态框并刷新列表
+            this.closeArtworkModal();
+            this.loadArtworks();
+            this.loadDashboardData();
+            
+            // 同步到前台
+            this.syncDataToFrontend();
+            
+            this.showSaveProgress(false);
+            console.log('✅ 作品保存完成');
+            
+        } catch (error) {
+            console.error('❌ 执行保存时发生错误:', error);
+            throw error;
+        }
+    }
+    
+    // 更新多语言数据
+    updateI18nData(titleKey, descKey, formData) {
+        const i18nData = dataManager.getI18nData();
+        if (!i18nData) {
+            throw new Error('多语言数据未加载');
+        }
+        
+        // 更新标题
+        i18nData.zh[titleKey] = formData.titleZh;
+        i18nData.en[titleKey] = formData.titleEn || formData.titleZh;
+        i18nData.ja[titleKey] = formData.titleJa || formData.titleZh;
+        
+        // 更新描述
+        i18nData.zh[descKey] = formData.descZh;
+        i18nData.en[descKey] = formData.descEn || formData.descZh;
+        i18nData.ja[descKey] = formData.descJa || formData.descZh;
+        
+        dataManager.setI18nData(i18nData);
+        console.log('🌐 多语言数据已更新');
+    }
+    
+    // 显示保存进度
+    showSaveProgress(show) {
+        const saveBtn = document.querySelector('#artwork-form button[type="submit"]');
+        if (saveBtn) {
+            if (show) {
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '⏳ 保存中...';
+            } else {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '💾 保存作品';
             }
         }
-        
-        if (!imageUrl) {
-            console.error('❌ 无法获取图片URL');
-            console.log('预览容器内容:', imagePreviewContainer?.innerHTML);
-            alert('请选择作品图片。如果已上传图片但仍提示此错误，请重新上传图片。');
-            return;
-        }
-        
-        // 继续保存流程
-        this.continueArtworkSave(titleZh, titleEn, titleJa, descZh, descEn, descJa, category, medium, size, year, imageUrl);
     }
     
     // 继续作品保存流程（分离出来处理异步情况）
@@ -664,6 +1136,82 @@ class AdminPanel {
         }
     }
     
+    // 批量操作相关方法
+    updateBatchActions() {
+        const checkboxes = document.querySelectorAll('.artwork-select:checked');
+        const batchActions = document.getElementById('batch-actions');
+        const deleteBtn = document.getElementById('delete-selected-btn');
+        
+        if (checkboxes.length > 0) {
+            batchActions.style.display = 'flex';
+            deleteBtn.textContent = `删除选中 (${checkboxes.length})`;
+        } else {
+            batchActions.style.display = 'none';
+        }
+    }
+    
+    // 全选/取消全选
+    toggleSelectAll() {
+        const selectAllBtn = document.getElementById('select-all-btn');
+        const checkboxes = document.querySelectorAll('.artwork-select');
+        const checkedBoxes = document.querySelectorAll('.artwork-select:checked');
+        
+        const isAllSelected = checkedBoxes.length === checkboxes.length && checkboxes.length > 0;
+        
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = !isAllSelected;
+        });
+        
+        selectAllBtn.textContent = isAllSelected ? '全选' : '取消全选';
+        this.updateBatchActions();
+    }
+    
+    // 批量删除作品
+    deleteSelectedArtworks() {
+        const checkboxes = document.querySelectorAll('.artwork-select:checked');
+        const selectedIds = Array.from(checkboxes).map(cb => parseInt(cb.getAttribute('data-artwork-id')));
+        
+        if (selectedIds.length === 0) {
+            alert('请先选择要删除的作品');
+            return;
+        }
+        
+        if (confirm(`确定要删除选中的 ${selectedIds.length} 件作品吗？此操作不可撤销。`)) {
+            console.log('🗑️ 开始批量删除作品:', selectedIds);
+            
+            let deletedCount = 0;
+            const i18nData = dataManager.getI18nData();
+            
+            selectedIds.forEach(id => {
+                const artwork = dataManager.getArtworkById(id);
+                if (artwork) {
+                    // 删除多语言数据
+                    delete i18nData.zh[artwork.titleKey];
+                    delete i18nData.en[artwork.titleKey];
+                    delete i18nData.ja[artwork.titleKey];
+                    delete i18nData.zh[artwork.descriptionKey];
+                    delete i18nData.en[artwork.descriptionKey];
+                    delete i18nData.ja[artwork.descriptionKey];
+                    
+                    // 删除作品
+                    dataManager.deleteArtwork(id);
+                    deletedCount++;
+                }
+            });
+            
+            // 更新多语言数据
+            dataManager.setI18nData(i18nData);
+            
+            this.showNotification(`成功删除 ${deletedCount} 件作品！`);
+            this.loadArtworks();
+            this.loadDashboardData();
+            this.updateBatchActions();
+            
+            // 同步数据到前台
+            this.syncDataToFrontend();
+        }
+    }
+    
     // 登出
     logout() {
         if (confirm('确定要退出登录吗？')) {
@@ -728,6 +1276,21 @@ window.closeArtworkModal = function() {
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
-    // 创建全局管理面板实例
-    window.adminPanel = new AdminPanel();
+    // 确保数据管理器已加载
+    if (typeof dataManager === 'undefined') {
+        console.error('❌ dataManager未定义，延迟初始化AdminPanel');
+        // 重试机制
+        const retryInit = () => {
+            if (typeof dataManager !== 'undefined') {
+                console.log('✅ dataManager已加载，开始初始化AdminPanel');
+                window.adminPanel = new AdminPanel();
+            } else {
+                setTimeout(retryInit, 100);
+            }
+        };
+        retryInit();
+    } else {
+        console.log('✅ dataManager可用，初始化AdminPanel');
+        window.adminPanel = new AdminPanel();
+    }
 });

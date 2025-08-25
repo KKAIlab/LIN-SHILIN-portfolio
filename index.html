@@ -21,87 +21,6 @@
     <!-- 图标 -->
     <link rel="icon" type="image/x-icon" href="./assets/favicon.ico">
     
-    <!-- 紧急语言切换脚本 - 确保即使其他脚本失败也能工作 -->
-    <script>
-        // 紧急备用语言切换函数
-        window.switchToLanguage = function(lang) {
-            console.log('🚀 紧急语言切换被调用:', lang);
-            
-            // 立即更新按钮状态
-            try {
-                document.querySelectorAll('.lang-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                    if (btn.getAttribute('data-lang') === lang) {
-                        btn.classList.add('active');
-                    }
-                });
-            } catch (e) {
-                console.error('更新按钮状态失败:', e);
-            }
-            
-            // 保存选择的语言
-            try {
-                localStorage.setItem('preferredLanguage', lang);
-                console.log('已保存语言偏好:', lang);
-            } catch (e) {
-                console.error('保存语言偏好失败:', e);
-            }
-            
-            // 尝试调用主要的语言切换函数
-            try {
-                if (window.switchLanguage && typeof window.switchLanguage === 'function') {
-                    window.switchLanguage(lang);
-                    console.log('✅ 调用主要语言切换函数成功');
-                } else {
-                    console.warn('⚠️ 主要语言切换函数不可用，等待加载...');
-                    // 延迟重试
-                    setTimeout(() => {
-                        if (window.switchLanguage && typeof window.switchLanguage === 'function') {
-                            window.switchLanguage(lang);
-                            console.log('✅ 延迟调用语言切换函数成功');
-                        } else {
-                            console.error('❌ 语言切换函数仍然不可用');
-                            // 强制刷新页面并带上语言参数
-                            window.location.hash = 'lang=' + lang;
-                        }
-                    }, 1000);
-                }
-            } catch (e) {
-                console.error('调用语言切换函数失败:', e);
-            }
-            
-            // 显示用户反馈
-            try {
-                const langNames = {
-                    zh: '中文',
-                    en: 'English', 
-                    ja: '日本語'
-                };
-                console.log(`🌐 语言已切换到: ${langNames[lang] || lang}`);
-            } catch (e) {
-                console.error('显示反馈失败:', e);
-            }
-        };
-        
-        // 页面加载时应用保存的语言
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🔄 检查保存的语言偏好...');
-            try {
-                const savedLang = localStorage.getItem('preferredLanguage');
-                if (savedLang) {
-                    console.log('发现保存的语言:', savedLang);
-                    // 延迟一下确保DOM完全加载
-                    setTimeout(() => {
-                        window.switchToLanguage(savedLang);
-                    }, 200);
-                }
-            } catch (e) {
-                console.error('应用保存的语言失败:', e);
-            }
-        });
-        
-        console.log('✅ 紧急语言切换系统已就绪');
-    </script>
 </head>
 <body>
     <!-- 加载动画 -->
@@ -127,9 +46,9 @@
                 
                 <!-- 语言切换器 -->
                 <div class="language-switcher">
-                    <button class="lang-btn" data-lang="zh" title="中文" onclick="window.switchToLanguage && window.switchToLanguage('zh')">中</button>
-                    <button class="lang-btn" data-lang="en" title="English" onclick="window.switchToLanguage && window.switchToLanguage('en')">EN</button>
-                    <button class="lang-btn" data-lang="ja" title="日本語" onclick="window.switchToLanguage && window.switchToLanguage('ja')">日</button>
+                    <button class="lang-btn" data-lang="zh" title="中文">中</button>
+                    <button class="lang-btn" data-lang="en" title="English">EN</button>
+                    <button class="lang-btn" data-lang="ja" title="日本語">日</button>
                 </div>
                 
                 <!-- 深色模式切换器 -->
@@ -348,6 +267,5 @@
     <script src="./js/debug-monitor.js"></script>
     <script src="./js/i18n.js"></script>
     <script src="./js/main.js"></script>
-    <script src="./js/simple-i18n-fix.js"></script>
 </body>
 </html>
