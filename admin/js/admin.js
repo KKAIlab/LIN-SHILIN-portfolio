@@ -346,11 +346,24 @@ class AdminPanel {
             const editBtn = card.querySelector('.artwork-edit-btn');
             console.log('🔍 编辑按钮查找结果:', editBtn);
             if (editBtn) {
+                // 添加多种事件监听来测试
                 editBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
                     e.stopPropagation();
                     console.log('🖱️ 点击编辑按钮，作品ID:', artwork.id);
+                    alert(`准备编辑作品 ${artwork.id}`);
                     this.editArtwork(artwork.id);
                 });
+                
+                // 添加鼠标事件测试
+                editBtn.addEventListener('mousedown', () => {
+                    console.log('🖱️ 编辑按钮 mousedown，作品ID:', artwork.id);
+                });
+                
+                editBtn.addEventListener('mouseup', () => {
+                    console.log('🖱️ 编辑按钮 mouseup，作品ID:', artwork.id);
+                });
+                
                 console.log('✅ 编辑按钮事件已绑定');
             } else {
                 console.warn('⚠️ 编辑按钮未找到');
