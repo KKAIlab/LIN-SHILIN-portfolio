@@ -225,8 +225,25 @@ class AdminPanel {
             // 渲染作品卡片
             filteredArtworks.forEach(artwork => {
                 try {
-                    const title = i18nData.zh?.[artwork.titleKey] || artwork.titleKey || '未命名';
-                    const desc = i18nData.zh?.[artwork.descriptionKey] || artwork.descriptionKey || '';
+                    // 更安全的标题获取方式
+                    let title = '未命名作品';
+                    let desc = '';
+                    
+                    if (i18nData && i18nData.zh && artwork.titleKey) {
+                        title = i18nData.zh[artwork.titleKey] || `作品 ${artwork.id}`;
+                    } else if (artwork.titleKey && !artwork.titleKey.startsWith('artwork-')) {
+                        title = artwork.titleKey;
+                    } else {
+                        title = `作品 ${artwork.id}`;
+                    }
+                    
+                    if (i18nData && i18nData.zh && artwork.descriptionKey) {
+                        desc = i18nData.zh[artwork.descriptionKey] || '';
+                    } else if (artwork.descriptionKey && !artwork.descriptionKey.startsWith('artwork-')) {
+                        desc = artwork.descriptionKey;
+                    }
+                    
+                    console.log(`🎨 渲染作品 ${artwork.id}: "${title}"`);
                     
                     const card = this.createArtworkCard(artwork, title, desc);
                     grid.appendChild(card);
@@ -253,7 +270,7 @@ class AdminPanel {
         }
     }
     
-    // 创建作品卡片的辅助函数
+    // 创建作品卡片的辅助函数 - 修复事件绑定版本
     createArtworkCard(artwork, title, desc) {
         const card = document.createElement('div');
         card.className = 'artwork-card';
@@ -262,38 +279,91 @@ class AdminPanel {
         // 安全的图片URL处理
         const imageUrl = artwork.image || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuaXoOWbvueJhzwvdGV4dD48L3N2Zz4=';
         
+        // 确保title和desc不是key值
+        const displayTitle = (title && !title.startsWith('artwork-')) ? title : `作品 ${artwork.id}`;
+        const displayDesc = (desc && !desc.startsWith('artwork-')) ? desc : '暂无描述';
+        
         card.innerHTML = `
             <div class="artwork-checkbox">
-                <input type="checkbox" class="artwork-select" data-artwork-id="${artwork.id}" onchange="adminPanel.updateBatchActions()">
+                <input type="checkbox" class="artwork-select" data-artwork-id="${artwork.id}">
             </div>
             <div class="artwork-image-container">
-                <img src="${imageUrl}" alt="${title}" class="artwork-image" loading="lazy" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzk5YTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuWbvueJh+WKoOi9veWksei0pTwvdGV4dD48L3N2Zz4='">
+                <img src="${imageUrl}" alt="${displayTitle}" class="artwork-image" loading="lazy" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzk5YTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuWbvueJh+WKoOi9veWksei0pTwvdGV4dD48L3N2Zz4='">
                 <div class="artwork-overlay">
-                    <button class="btn btn-sm btn-primary" onclick="adminPanel.previewArtwork(${artwork.id})" title="预览">👁</button>
+                    <button class="btn btn-sm btn-primary artwork-preview-btn" data-artwork-id="${artwork.id}" title="预览">👁</button>
                 </div>
             </div>
             <div class="artwork-info">
-                <h3 class="artwork-title" title="${title}">${title}</h3>
+                <h3 class="artwork-title" title="${displayTitle}">${displayTitle}</h3>
                 <div class="artwork-meta">
                     <span class="category-badge category-${artwork.category}">${this.getCategoryName(artwork.category)}</span>
                     <span class="year-badge">${artwork.details?.year || '未知'}</span>
                 </div>
-                <div class="artwork-description" title="${desc}">${desc.length > 50 ? desc.substring(0, 50) + '...' : desc}</div>
+                <div class="artwork-description" title="${displayDesc}">${displayDesc.length > 50 ? displayDesc.substring(0, 50) + '...' : displayDesc}</div>
                 <div class="artwork-details">
                     <small>${artwork.details?.medium || '未知媒介'} | ${artwork.details?.size || '未知尺寸'}</small>
                 </div>
                 <div class="artwork-actions">
-                    <button class="btn btn-primary btn-small" onclick="adminPanel.editArtwork(${artwork.id})" title="编辑作品">
+                    <button class="btn btn-primary btn-small artwork-edit-btn" data-artwork-id="${artwork.id}" title="编辑作品">
                         ✏️ 编辑
                     </button>
-                    <button class="btn btn-danger btn-small" onclick="adminPanel.deleteArtwork(${artwork.id})" title="删除作品">
+                    <button class="btn btn-danger btn-small artwork-delete-btn" data-artwork-id="${artwork.id}" title="删除作品">
                         🗑️ 删除
                     </button>
                 </div>
             </div>
         `;
         
+        // 绑定事件监听器（避免onclick依赖全局变量）
+        this.bindCardEvents(card, artwork);
+        
         return card;
+    }
+    
+    // 绑定卡片事件
+    bindCardEvents(card, artwork) {
+        try {
+            // 预览按钮
+            const previewBtn = card.querySelector('.artwork-preview-btn');
+            if (previewBtn) {
+                previewBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.previewArtwork(artwork.id);
+                });
+            }
+            
+            // 编辑按钮
+            const editBtn = card.querySelector('.artwork-edit-btn');
+            if (editBtn) {
+                editBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    console.log('🖱️ 点击编辑按钮，作品ID:', artwork.id);
+                    this.editArtwork(artwork.id);
+                });
+            }
+            
+            // 删除按钮
+            const deleteBtn = card.querySelector('.artwork-delete-btn');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    console.log('🖱️ 点击删除按钮，作品ID:', artwork.id);
+                    this.deleteArtwork(artwork.id);
+                });
+            }
+            
+            // 复选框
+            const checkbox = card.querySelector('.artwork-select');
+            if (checkbox) {
+                checkbox.addEventListener('change', () => {
+                    this.updateBatchActions();
+                });
+            }
+            
+            console.log(`✅ 成功绑定作品卡片事件，ID: ${artwork.id}`);
+        } catch (error) {
+            console.error('❌ 绑定卡片事件失败:', error);
+        }
     }
     
     // 预览作品功能
