@@ -304,15 +304,18 @@ class AdminPanel {
                     <small>${artwork.details?.medium || '未知媒介'} | ${artwork.details?.size || '未知尺寸'}</small>
                 </div>
                 <div class="artwork-actions">
-                    <button class="btn btn-primary btn-small artwork-edit-btn" data-artwork-id="${artwork.id}" title="编辑作品">
+                    <button class="btn btn-primary btn-small artwork-edit-btn" data-artwork-id="${artwork.id}" title="编辑作品" style="pointer-events: auto; z-index: 10;">
                         ✏️ 编辑
                     </button>
-                    <button class="btn btn-danger btn-small artwork-delete-btn" data-artwork-id="${artwork.id}" title="删除作品">
+                    <button class="btn btn-danger btn-small artwork-delete-btn" data-artwork-id="${artwork.id}" title="删除作品" style="pointer-events: auto; z-index: 10;">
                         🗑️ 删除
                     </button>
                 </div>
             </div>
         `;
+        
+        console.log(`📋 生成的卡片HTML for ID ${artwork.id}:`);
+        console.log(card.outerHTML.substring(0, 500) + '...');
         
         // 绑定事件监听器（避免onclick依赖全局变量）
         this.bindCardEvents(card, artwork);
@@ -323,33 +326,48 @@ class AdminPanel {
     // 绑定卡片事件
     bindCardEvents(card, artwork) {
         try {
+            console.log(`🔄 开始绑定作品 ${artwork.id} 的事件...`);
+            
             // 预览按钮
             const previewBtn = card.querySelector('.artwork-preview-btn');
+            console.log('🔍 预览按钮查找结果:', previewBtn);
             if (previewBtn) {
                 previewBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
+                    console.log('🖱️ 点击预览按钮，作品ID:', artwork.id);
                     this.previewArtwork(artwork.id);
                 });
+                console.log('✅ 预览按钮事件已绑定');
+            } else {
+                console.warn('⚠️ 预览按钮未找到');
             }
             
             // 编辑按钮
             const editBtn = card.querySelector('.artwork-edit-btn');
+            console.log('🔍 编辑按钮查找结果:', editBtn);
             if (editBtn) {
                 editBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     console.log('🖱️ 点击编辑按钮，作品ID:', artwork.id);
                     this.editArtwork(artwork.id);
                 });
+                console.log('✅ 编辑按钮事件已绑定');
+            } else {
+                console.warn('⚠️ 编辑按钮未找到');
             }
             
             // 删除按钮
             const deleteBtn = card.querySelector('.artwork-delete-btn');
+            console.log('🔍 删除按钮查找结果:', deleteBtn);
             if (deleteBtn) {
                 deleteBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     console.log('🖱️ 点击删除按钮，作品ID:', artwork.id);
                     this.deleteArtwork(artwork.id);
                 });
+                console.log('✅ 删除按钮事件已绑定');
+            } else {
+                console.warn('⚠️ 删除按钮未找到');
             }
             
             // 复选框
