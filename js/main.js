@@ -1318,3 +1318,74 @@ function openFullscreen(artwork) {
         fullscreenModal.classList.add('show');
     }, 10);
 }
+
+// 数据导出功能
+window.exportSiteData = function() {
+    console.log('📤 [数据导出] 开始导出网站数据...');
+    
+    try {
+        // 收集所有localStorage数据
+        const siteData = {
+            timestamp: new Date().toISOString(),
+            version: '1.0',
+            artworks: JSON.parse(localStorage.getItem('artworks_data') || '[]'),
+            profile: JSON.parse(localStorage.getItem('profile_data') || '{}'),
+            i18n: JSON.parse(localStorage.getItem('i18n_data') || '{}'),
+            siteConfig: JSON.parse(localStorage.getItem('site_config') || '{}')
+        };
+        
+        console.log('📊 导出数据统计:', {
+            作品数量: siteData.artworks.length,
+            个人信息: Object.keys(siteData.profile).length + '个字段',
+            多语言条目: Object.keys(siteData.i18n.zh || {}).length + '条',
+            配置项: Object.keys(siteData.siteConfig).length + '项'
+        });
+        
+        // 创建下载文件
+        const dataStr = JSON.stringify(siteData, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        // 创建下载链接
+        const link = document.createElement('a');
+        link.href = url;
+        const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        link.download = `linshilin-portfolio-data-${timestamp}.json`;
+        
+        // 触发下载
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // 清理URL对象
+        URL.revokeObjectURL(url);
+        
+        // 显示成功提示
+        const message = `✅ 数据导出成功！
+        
+📁 文件名: ${link.download}
+📊 包含数据:
+• ${siteData.artworks.length} 件作品
+• ${Object.keys(siteData.profile).length} 项个人信息
+• ${Object.keys(siteData.i18n.zh || {}).length} 条多语言文本
+
+📤 下一步操作:
+将导出的JSON文件发送给开发者，以便将您的修改同步到正式网站。
+
+💡 提示:
+这个文件包含了您在后台管理中的所有修改，包括新增的作品、编辑的信息和翻译文本。`;
+
+        alert(message);
+        
+    } catch (error) {
+        console.error('❌ [数据导出] 导出失败:', error);
+        alert(`❌ 数据导出失败
+        
+错误信息: ${error.message}
+
+请尝试以下解决方案:
+1. 刷新页面后重试
+2. 检查浏览器是否支持下载功能
+3. 联系开发者获取帮助`);
+    }
+};
