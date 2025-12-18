@@ -1,141 +1,145 @@
-# 艺术家作品集网站
+# Artist Portfolio Website
 
-一个现代化、响应式的艺术家作品集网站，展示艺术作品和创作理念。
+A modern, responsive artist portfolio website showcasing artwork and creative philosophy.
 
-## 🎨 特性
+## 🌐 Live Demo
 
-- **响应式设计** - 适配各种设备和屏幕尺寸
-- **现代化界面** - 简洁优雅的设计风格
-- **作品展示** - 支持分类过滤的作品画廊
-- **交互动画** - 流畅的页面动画和过渡效果
-- **联系表单** - 方便访客与艺术家联系
-- **SEO 优化** - 搜索引擎友好的结构
+**[View Portfolio](https://kkailab.github.io/LIN-SHILIN-portfolio/)**
 
-## 📁 项目结构
+## 🎨 Features
+
+- **Responsive Design** - Adapts to all devices and screen sizes
+- **Modern Interface** - Clean and elegant design aesthetic
+- **Artwork Gallery** - Portfolio with category filtering
+- **Interactive Animations** - Smooth page transitions and effects
+- **Contact Form** - Easy way for visitors to reach out
+- **SEO Optimized** - Search engine friendly structure
+
+## 📁 Project Structure
 
 ```
 artist-portfolio/
-├── index.html          # 主页面
+├── index.html          # Main page
 ├── css/
-│   └── style.css       # 样式文件
+│   └── style.css       # Stylesheet
 ├── js/
-│   └── main.js         # JavaScript 交互
-├── images/             # 图片资源
-├── assets/             # 其他资源文件
-└── README.md           # 项目说明
+│   └── main.js         # JavaScript interactions
+├── images/             # Image assets
+├── assets/             # Other resource files
+└── README.md           # Project documentation
 ```
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-1. **克隆项目**
+1. **Clone the Project**
    ```bash
-   git clone [仓库URL]
-   cd artist-portfolio
+   git clone https://github.com/KKAIlab/LIN-SHILIN-portfolio.git
+   cd LIN-SHILIN-portfolio
    ```
 
-2. **本地预览**
-   - 使用任何静态服务器运行项目
-   - 或直接在浏览器中打开 `index.html`
+2. **Local Preview**
+   - Run with any static server
+   - Or simply open `index.html` in your browser
 
-3. **自定义内容**
-   - 修改 `index.html` 中的个人信息
-   - 替换 `images/` 文件夹中的图片
-   - 更新作品数据（在 `js/main.js` 中的 `artworks` 数组）
+3. **Customize Content**
+   - Modify personal information in `index.html`
+   - Replace images in the `images/` folder
+   - Update artwork data (in the `artworks` array in `js/main.js`)
 
-## 🛠️ 技术栈
+## 🛠️ Tech Stack
 
-- **HTML5** - 语义化标记
-- **CSS3** - 现代样式和动画
-- **JavaScript (ES6+)** - 交互功能
-- **Google Fonts** - 优美的字体
-- **Unsplash API** - 示例图片（需替换为实际作品）
+- **HTML5** - Semantic markup
+- **CSS3** - Modern styling and animations
+- **JavaScript (ES6+)** - Interactive functionality
+- **Google Fonts** - Beautiful typography
+- **Unsplash API** - Sample images (replace with actual artwork)
 
-## 📝 自定义指南
+## 📝 Customization Guide
 
-### 1. 个人信息
-在 `index.html` 中修改：
-- 艺术家姓名
-- 个人简介
-- 联系信息
-- 社交媒体链接
+### 1. Personal Information
+Edit in `index.html`:
+- Artist name
+- Bio/About section
+- Contact information
+- Social media links
 
-### 2. 作品数据
-在 `js/main.js` 中的 `artworks` 数组中添加你的作品：
+### 2. Artwork Data
+Add your artworks in the `artworks` array in `js/main.js`:
 
 ```javascript
 {
     id: 1,
-    title: "作品标题",
+    title: "Artwork Title",
     category: "paintings", // paintings, digital, sketches
     image: "path/to/image.jpg",
-    description: "作品描述",
+    description: "Artwork description",
     details: {
-        medium: "创作媒介",
-        size: "作品尺寸",
-        year: "创作年份"
+        medium: "Medium used",
+        size: "Dimensions",
+        year: "Year created"
     }
 }
 ```
 
-### 3. 样式定制
-在 `css/style.css` 中修改：
-- 颜色主题（`:root` 变量）
-- 字体选择
-- 动画效果
-- 布局样式
+### 3. Style Customization
+Modify in `css/style.css`:
+- Color theme (`:root` variables)
+- Font selection
+- Animation effects
+- Layout styles
 
-### 4. 联系表单
-目前使用模拟提交，如需真实功能，可集成：
+### 4. Contact Form
+Currently uses simulated submission. For real functionality, integrate:
 - [Formspree](https://formspree.io/)
 - [Netlify Forms](https://www.netlify.com/products/forms/)
 - [EmailJS](https://www.emailjs.com/)
 
-## 🌐 部署
+## 🌐 Deployment
 
 ### GitHub Pages
-1. 创建 GitHub 仓库
-2. 上传代码到仓库
-3. 在仓库设置中启用 GitHub Pages
-4. 选择 `main` 分支作为源
+1. Create a GitHub repository
+2. Push code to the repository
+3. Enable GitHub Pages in repository settings
+4. Select `main` branch as source
 
 ### Netlify
-1. 连接 GitHub 仓库到 Netlify
-2. 自动部署和CDN加速
+1. Connect GitHub repository to Netlify
+2. Automatic deployment with CDN acceleration
 
 ### Vercel
-1. 导入 GitHub 仓库到 Vercel
-2. 自动部署和全球CDN
+1. Import GitHub repository to Vercel
+2. Automatic deployment with global CDN
 
-## 📱 浏览器支持
+## 📱 Browser Support
 
-- Chrome (推荐)
+- Chrome (recommended)
 - Firefox
 - Safari
 - Edge
-- 移动端浏览器
+- Mobile browsers
 
-## 🎯 性能优化
+## 🎯 Performance Optimization
 
-- 图片懒加载
-- CSS/JS 代码优化
-- 动画性能优化
-- 响应式图片
-- 预加载关键资源
+- Image lazy loading
+- CSS/JS code optimization
+- Animation performance tuning
+- Responsive images
+- Critical resource preloading
 
-## 📄 许可证
+## 📄 License
 
-MIT License - 可自由使用和修改
+MIT License - Free to use and modify
 
-## 💡 贡献
+## 💡 Contributing
 
-欢迎提交 Issues 和 Pull Requests！
+Issues and Pull Requests are welcome!
 
-## 📞 支持
+## 📞 Support
 
-如有问题，请通过以下方式联系：
-- GitHub Issues
-- 邮箱：[your-email@example.com]
+For questions, contact via:
+- GitHub Issues: https://github.com/KKAIlab/LIN-SHILIN-portfolio/issues
+- Website: https://kkailab.github.io/LIN-SHILIN-portfolio/
 
 ---
 
-⭐ 如果这个项目对你有帮助，请给个 Star！
+⭐ If this project helps you, please give it a Star!
