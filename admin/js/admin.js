@@ -169,55 +169,42 @@ class AdminPanel {
         document.getElementById('sketches-count').textContent = stats.sketches;
     }
     
-    // 优化的作品列表加载
+    // 加载作品列表
     loadArtworks(searchTerm = '', category = '') {
-        console.log('🎨 开始加载作品列表...');
-        
         try {
             const artworks = dataManager.getArtworks();
             const i18nData = dataManager.getI18nData();
             const grid = document.getElementById('artworks-grid');
-            
+
             if (!artworks || artworks.length === 0) {
-                console.warn('⚠️ 没有作品数据');
                 grid.innerHTML = '<p style="text-align: center; color: #718096; padding: 40px;">暂无作品数据</p>';
                 return;
             }
-            
+
             if (!i18nData) {
-                console.error('❌ 多语言数据缺失');
                 grid.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 40px;">多语言数据加载失败</p>';
                 return;
             }
             
-            console.log(`📊 共找到 ${artworks.length} 件作品`);
-            
             // 过滤作品
-            let filteredArtworks = [...artworks]; // 创建副本避免修改原数组
-            
+            let filteredArtworks = [...artworks];
+
             if (searchTerm && searchTerm.trim()) {
                 filteredArtworks = filteredArtworks.filter(artwork => {
-                    try {
-                        const title = i18nData.zh?.[artwork.titleKey] || artwork.titleKey || '';
-                        const desc = i18nData.zh?.[artwork.descriptionKey] || artwork.descriptionKey || '';
-                        const medium = artwork.details?.medium || '';
-                        
-                        const searchText = searchTerm.toLowerCase();
-                        return title.toLowerCase().includes(searchText) || 
-                               desc.toLowerCase().includes(searchText) ||
-                               medium.toLowerCase().includes(searchText);
-                    } catch (error) {
-                        console.warn('⚠️ 搜索过滤时出错:', error);
-                        return false;
-                    }
+                    const title = i18nData.zh?.[artwork.titleKey] || artwork.titleKey || '';
+                    const desc = i18nData.zh?.[artwork.descriptionKey] || artwork.descriptionKey || '';
+                    const medium = artwork.details?.medium || '';
+
+                    const searchText = searchTerm.toLowerCase();
+                    return title.toLowerCase().includes(searchText) ||
+                           desc.toLowerCase().includes(searchText) ||
+                           medium.toLowerCase().includes(searchText);
                 });
             }
-            
+
             if (category && category !== 'all') {
                 filteredArtworks = filteredArtworks.filter(artwork => artwork.category === category);
             }
-            
-            console.log(`🔍 过滤后显示 ${filteredArtworks.length} 件作品`);
             
             // 清空网格
             grid.innerHTML = '';
@@ -225,10 +212,9 @@ class AdminPanel {
             // 渲染作品卡片
             filteredArtworks.forEach(artwork => {
                 try {
-                    // 更安全的标题获取方式
                     let title = '未命名作品';
                     let desc = '';
-                    
+
                     if (i18nData && i18nData.zh && artwork.titleKey) {
                         title = i18nData.zh[artwork.titleKey] || `作品 ${artwork.id}`;
                     } else if (artwork.titleKey && !artwork.titleKey.startsWith('artwork-')) {
@@ -236,33 +222,29 @@ class AdminPanel {
                     } else {
                         title = `作品 ${artwork.id}`;
                     }
-                    
+
                     if (i18nData && i18nData.zh && artwork.descriptionKey) {
                         desc = i18nData.zh[artwork.descriptionKey] || '';
                     } else if (artwork.descriptionKey && !artwork.descriptionKey.startsWith('artwork-')) {
                         desc = artwork.descriptionKey;
                     }
-                    
-                    console.log(`🎨 渲染作品 ${artwork.id}: "${title}"`);
-                    
+
                     const card = this.createArtworkCard(artwork, title, desc);
                     grid.appendChild(card);
                 } catch (error) {
-                    console.error('❌ 渲染作品卡片失败:', error, artwork);
+                    console.error('渲染作品卡片失败:', error);
                 }
             });
             
             if (filteredArtworks.length === 0) {
-                const noResultsMsg = searchTerm || category ? 
-                    '没有找到符合条件的作品' : 
+                const noResultsMsg = searchTerm || category ?
+                    '没有找到符合条件的作品' :
                     '暂无作品数据';
                 grid.innerHTML = `<p style="text-align: center; color: #718096; padding: 40px;">${noResultsMsg}</p>`;
             }
-            
-            console.log('✅ 作品列表加载完成');
-            
+
         } catch (error) {
-            console.error('❌ 加载作品列表失败:', error);
+            console.error('加载作品列表失败:', error);
             const grid = document.getElementById('artworks-grid');
             if (grid) {
                 grid.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 40px;">作品列表加载失败，请刷新重试</p>';
@@ -314,10 +296,7 @@ class AdminPanel {
             </div>
         `;
         
-        console.log(`📋 生成的卡片HTML for ID ${artwork.id}:`);
-        console.log(card.outerHTML.substring(0, 500) + '...');
-        
-        // 绑定事件监听器（避免onclick依赖全局变量）
+        // 绑定事件监听器
         this.bindCardEvents(card, artwork);
         
         return card;
@@ -325,75 +304,36 @@ class AdminPanel {
     
     // 绑定卡片事件
     bindCardEvents(card, artwork) {
-        try {
-            console.log(`🔄 开始绑定作品 ${artwork.id} 的事件...`);
-            
-            // 预览按钮
-            const previewBtn = card.querySelector('.artwork-preview-btn');
-            console.log('🔍 预览按钮查找结果:', previewBtn);
-            if (previewBtn) {
-                previewBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    console.log('🖱️ 点击预览按钮，作品ID:', artwork.id);
-                    this.previewArtwork(artwork.id);
-                });
-                console.log('✅ 预览按钮事件已绑定');
-            } else {
-                console.warn('⚠️ 预览按钮未找到');
-            }
-            
-            // 编辑按钮
-            const editBtn = card.querySelector('.artwork-edit-btn');
-            console.log('🔍 编辑按钮查找结果:', editBtn);
-            if (editBtn) {
-                // 添加多种事件监听来测试
-                editBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('🖱️ 点击编辑按钮，作品ID:', artwork.id);
-                    alert(`准备编辑作品 ${artwork.id}`);
-                    this.editArtwork(artwork.id);
-                });
-                
-                // 添加鼠标事件测试
-                editBtn.addEventListener('mousedown', () => {
-                    console.log('🖱️ 编辑按钮 mousedown，作品ID:', artwork.id);
-                });
-                
-                editBtn.addEventListener('mouseup', () => {
-                    console.log('🖱️ 编辑按钮 mouseup，作品ID:', artwork.id);
-                });
-                
-                console.log('✅ 编辑按钮事件已绑定');
-            } else {
-                console.warn('⚠️ 编辑按钮未找到');
-            }
-            
-            // 删除按钮
-            const deleteBtn = card.querySelector('.artwork-delete-btn');
-            console.log('🔍 删除按钮查找结果:', deleteBtn);
-            if (deleteBtn) {
-                deleteBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    console.log('🖱️ 点击删除按钮，作品ID:', artwork.id);
-                    this.deleteArtwork(artwork.id);
-                });
-                console.log('✅ 删除按钮事件已绑定');
-            } else {
-                console.warn('⚠️ 删除按钮未找到');
-            }
-            
-            // 复选框
-            const checkbox = card.querySelector('.artwork-select');
-            if (checkbox) {
-                checkbox.addEventListener('change', () => {
-                    this.updateBatchActions();
-                });
-            }
-            
-            console.log(`✅ 成功绑定作品卡片事件，ID: ${artwork.id}`);
-        } catch (error) {
-            console.error('❌ 绑定卡片事件失败:', error);
+        const previewBtn = card.querySelector('.artwork-preview-btn');
+        if (previewBtn) {
+            previewBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.previewArtwork(artwork.id);
+            });
+        }
+
+        const editBtn = card.querySelector('.artwork-edit-btn');
+        if (editBtn) {
+            editBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.editArtwork(artwork.id);
+            });
+        }
+
+        const deleteBtn = card.querySelector('.artwork-delete-btn');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.deleteArtwork(artwork.id);
+            });
+        }
+
+        const checkbox = card.querySelector('.artwork-select');
+        if (checkbox) {
+            checkbox.addEventListener('change', () => {
+                this.updateBatchActions();
+            });
         }
     }
     
@@ -498,15 +438,10 @@ class AdminPanel {
         document.getElementById('image-preview').innerHTML = '';
     }
     
-    // 优化的图片上传处理
+    // 图片上传处理
     handleImageUpload(e) {
         const file = e.target.files[0];
-        if (!file) {
-            console.log('📸 用户取消了文件选择');
-            return;
-        }
-        
-        console.log('📸 开始处理图片上传:', file.name, '大小:', (file.size / 1024 / 1024).toFixed(2) + 'MB');
+        if (!file) return;
         
         // 验证文件类型
         const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
@@ -516,10 +451,10 @@ class AdminPanel {
             return;
         }
         
-        // 验证文件大小（最大10MB，增加限制）
-        const maxSize = 10 * 1024 * 1024; // 10MB
+        // 验证文件大小（最大5MB）
+        const maxSize = 5 * 1024 * 1024; // 5MB
         if (file.size > maxSize) {
-            this.showNotification('图片文件大小不能超过10MB', 'error');
+            this.showNotification('图片文件大小不能超过5MB', 'error');
             e.target.value = '';
             return;
         }
@@ -532,24 +467,21 @@ class AdminPanel {
         reader.onload = (event) => {
             try {
                 const imageUrl = event.target.result;
-                
-                // 验证base64数据完整性
+
                 if (!imageUrl || !imageUrl.startsWith('data:image/')) {
                     throw new Error('图片数据格式无效');
                 }
-                
-                // 预处理图片（可选：压缩大图片）
+
                 this.processAndDisplayImage(imageUrl, file);
-                
+
             } catch (error) {
-                console.error('❌ 图片处理失败:', error);
+                console.error('图片处理失败:', error);
                 this.showNotification('图片处理失败：' + error.message, 'error');
                 this.showUploadProgress(false);
             }
         };
-        
-        reader.onerror = (error) => {
-            console.error('❌ 图片读取失败:', error);
+
+        reader.onerror = () => {
             this.showNotification('图片读取失败，请重试', 'error');
             this.showUploadProgress(false);
         };
@@ -560,9 +492,8 @@ class AdminPanel {
     
     // 处理并显示图片
     processAndDisplayImage(imageUrl, file) {
-        // 检查是否需要压缩（大于2MB的图片）
-        if (file.size > 2 * 1024 * 1024) {
-            console.log('🔄 图片较大，进行压缩处理...');
+        // 所有图片都进行压缩以适配localStorage存储
+        if (file.size > 500 * 1024) {
             this.compressImage(imageUrl, file, (compressedUrl, compressedFile) => {
                 this.finalizeImageUpload(compressedUrl, compressedFile || file);
             });
@@ -586,20 +517,19 @@ class AdminPanel {
         
         this.showUploadProgress(false);
         this.showNotification('图片上传成功！', 'success');
-        console.log('✅ 图片上传处理完成');
     }
     
-    // 图片压缩功能（可选）
+    // 图片压缩功能
     compressImage(imageUrl, file, callback) {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         const img = new Image();
-        
+
         img.onload = () => {
             // 计算压缩后的尺寸（保持宽高比）
             let { width, height } = img;
-            const maxDimension = 1920; // 最大尺寸
-            
+            const maxDimension = 1200; // 最大尺寸，降低以适应localStorage
+
             if (width > maxDimension || height > maxDimension) {
                 if (width > height) {
                     height = (height * maxDimension) / width;
@@ -609,30 +539,46 @@ class AdminPanel {
                     height = maxDimension;
                 }
             }
-            
+
             canvas.width = width;
             canvas.height = height;
-            
+
             // 绘制压缩后的图片
             ctx.drawImage(img, 0, 0, width, height);
-            
-            // 输出压缩后的图片
-            const quality = 0.8; // 压缩质量
-            const compressedUrl = canvas.toDataURL(file.type, quality);
-            
-            console.log('🗜️ 图片压缩完成:', 
+
+            // 输出压缩后的图片（JPEG格式体积更小）
+            const quality = 0.7;
+            let compressedUrl = canvas.toDataURL('image/jpeg', quality);
+
+            // 如果压缩后仍然太大（>500KB base64），进一步压缩
+            if (compressedUrl.length > 500 * 1024) {
+                const smallerDim = 800;
+                const ratio = Math.min(smallerDim / img.width, smallerDim / img.height, 1);
+                canvas.width = img.width * ratio;
+                canvas.height = img.height * ratio;
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                compressedUrl = canvas.toDataURL('image/jpeg', 0.6);
+            }
+
+            console.log('图片压缩完成:',
                 '原始大小:', (file.size / 1024 / 1024).toFixed(2) + 'MB',
                 '压缩后大小:', (compressedUrl.length * 0.75 / 1024 / 1024).toFixed(2) + 'MB'
             );
-            
-            callback(compressedUrl, null);
+
+            // 创建代理file对象保留元数据
+            const compressedFile = {
+                name: file.name,
+                size: compressedUrl.length * 0.75,
+                type: 'image/jpeg'
+            };
+            callback(compressedUrl, compressedFile);
         };
-        
+
         img.onerror = () => {
-            console.warn('⚠️ 图片压缩失败，使用原图');
+            console.warn('图片压缩失败，使用原图');
             callback(imageUrl, file);
         };
-        
+
         img.src = imageUrl;
     }
     
@@ -692,7 +638,6 @@ class AdminPanel {
         document.getElementById('image-preview').innerHTML = '';
         document.getElementById('artwork-image-input').value = '';
         this.tempImageData = null;
-        console.log('🗑️ 图片预览已移除');
     }
     
     // 替换图片
@@ -723,7 +668,6 @@ class AdminPanel {
                 type: 'url',
                 isExternal: true
             };
-            console.log('✅ 外部图片URL验证成功');
         };
         
         img.onerror = () => {
@@ -733,46 +677,36 @@ class AdminPanel {
         img.src = url;
     }
     
-    // 优化的作品保存功能
+    // 保存作品
     saveArtwork() {
-        console.log('🚀 开始保存作品...');
-        
         try {
-            // 显示保存状态
             this.showSaveProgress(true);
-            
+
             const form = document.getElementById('artwork-form');
             if (!form) {
                 throw new Error('找不到表单元素');
             }
-            
-            // 获取并验证表单数据
+
             const formData = this.extractFormData();
             const validationResult = this.validateFormData(formData);
-            
+
             if (!validationResult.isValid) {
                 this.showNotification(validationResult.message, 'error');
                 this.showSaveProgress(false);
                 return;
             }
-            
-            console.log('📝 表单验证通过:', formData);
-            
-            // 获取图片URL
+
             const imageUrl = this.getArtworkImageUrl();
             if (!imageUrl) {
                 this.showNotification('请选择作品图片', 'error');
                 this.showSaveProgress(false);
                 return;
             }
-            
-            console.log('🖼️ 图片URL获取成功，长度:', imageUrl.length);
-            
-            // 执行保存
+
             this.executeArtworkSave(formData, imageUrl);
-            
+
         } catch (error) {
-            console.error('❌ 保存作品时发生错误:', error);
+            console.error('保存作品失败:', error);
             this.showNotification('保存失败：' + error.message, 'error');
             this.showSaveProgress(false);
         }
@@ -834,96 +768,75 @@ class AdminPanel {
     getArtworkImageUrl() {
         // 优先级1：临时上传的图片
         if (this.tempImageData && this.tempImageData.url) {
-            console.log('✅ 使用临时上传的图片');
             return this.tempImageData.url;
         }
-        
+
         // 优先级2：预览容器中的图片
         const imagePreview = document.querySelector('#image-preview img');
         if (imagePreview && imagePreview.src && !imagePreview.src.includes('data:image/svg+xml')) {
-            console.log('✅ 使用预览容器中的图片');
             return imagePreview.src;
         }
-        
+
         // 优先级3：编辑模式下的原始图片
         if (this.currentEditingArtwork) {
             const currentArtwork = dataManager.getArtworkById(this.currentEditingArtwork);
             if (currentArtwork && currentArtwork.image) {
-                console.log('✅ 使用现有作品的图片');
                 return currentArtwork.image;
             }
         }
-        
-        console.warn('⚠️ 未找到有效的图片URL');
+
         return null;
     }
     
     // 执行作品保存
     executeArtworkSave(formData, imageUrl) {
-        try {
-            // 生成唯一的key
-            const timestamp = Date.now();
-            const titleKey = this.currentEditingArtwork ? 
-                dataManager.getArtworkById(this.currentEditingArtwork).titleKey :
-                `artwork-${timestamp}-title`;
-            const descKey = this.currentEditingArtwork ? 
-                dataManager.getArtworkById(this.currentEditingArtwork).descriptionKey :
-                `artwork-${timestamp}-desc`;
-            
-            console.log('🔑 生成键值:', { titleKey, descKey });
-            
-            // 更新多语言数据
-            this.updateI18nData(titleKey, descKey, formData);
-            
-            // 创建作品对象
-            const artwork = {
-                titleKey: titleKey,
-                descriptionKey: descKey,
-                category: formData.category,
-                image: imageUrl,
-                details: {
-                    medium: formData.medium || '未指定',
-                    size: formData.size || '未指定',
-                    year: formData.year || new Date().getFullYear().toString()
-                }
-            };
-            
-            // 保存作品
-            let savedArtwork;
-            if (this.currentEditingArtwork) {
-                savedArtwork = dataManager.updateArtwork(this.currentEditingArtwork, artwork);
-                console.log('📝 更新作品:', savedArtwork);
-            } else {
-                savedArtwork = dataManager.addArtwork(artwork);
-                console.log('➕ 添加新作品:', savedArtwork);
+        const timestamp = Date.now();
+        const titleKey = this.currentEditingArtwork ?
+            dataManager.getArtworkById(this.currentEditingArtwork).titleKey :
+            `artwork-${timestamp}-title`;
+        const descKey = this.currentEditingArtwork ?
+            dataManager.getArtworkById(this.currentEditingArtwork).descriptionKey :
+            `artwork-${timestamp}-desc`;
+
+        // 更新多语言数据
+        this.updateI18nData(titleKey, descKey, formData);
+
+        // 创建作品对象
+        const artwork = {
+            titleKey: titleKey,
+            descriptionKey: descKey,
+            category: formData.category,
+            image: imageUrl,
+            details: {
+                medium: formData.medium || '未指定',
+                size: formData.size || '未指定',
+                year: formData.year || new Date().getFullYear().toString()
             }
-            
-            if (!savedArtwork) {
-                throw new Error('作品保存失败，请检查数据');
-            }
-            
-            // 清理临时数据
-            this.tempImageData = null;
-            
-            // 显示成功消息
-            const message = this.currentEditingArtwork ? '作品更新成功！' : '作品添加成功！';
-            this.showNotification(message, 'success');
-            
-            // 关闭模态框并刷新列表
-            this.closeArtworkModal();
-            this.loadArtworks();
-            this.loadDashboardData();
-            
-            // 同步到前台
-            this.syncDataToFrontend();
-            
-            this.showSaveProgress(false);
-            console.log('✅ 作品保存完成');
-            
-        } catch (error) {
-            console.error('❌ 执行保存时发生错误:', error);
-            throw error;
+        };
+
+        // 保存作品
+        let savedArtwork;
+        if (this.currentEditingArtwork) {
+            savedArtwork = dataManager.updateArtwork(this.currentEditingArtwork, artwork);
+        } else {
+            savedArtwork = dataManager.addArtwork(artwork);
         }
+
+        if (!savedArtwork) {
+            throw new Error('作品保存失败，请检查数据');
+        }
+
+        // 清理临时数据
+        this.tempImageData = null;
+
+        const message = this.currentEditingArtwork ? '作品更新成功！' : '作品添加成功！';
+        this.showNotification(message, 'success');
+
+        this.closeArtworkModal();
+        this.loadArtworks();
+        this.loadDashboardData();
+        this.syncDataToFrontend();
+        this.showSaveProgress(false);
     }
     
     // 更新多语言数据
@@ -932,19 +845,16 @@ class AdminPanel {
         if (!i18nData) {
             throw new Error('多语言数据未加载');
         }
-        
-        // 更新标题
+
         i18nData.zh[titleKey] = formData.titleZh;
         i18nData.en[titleKey] = formData.titleEn || formData.titleZh;
         i18nData.ja[titleKey] = formData.titleJa || formData.titleZh;
-        
-        // 更新描述
+
         i18nData.zh[descKey] = formData.descZh;
         i18nData.en[descKey] = formData.descEn || formData.descZh;
         i18nData.ja[descKey] = formData.descJa || formData.descZh;
-        
+
         dataManager.setI18nData(i18nData);
-        console.log('🌐 多语言数据已更新');
     }
     
     // 显示保存进度
@@ -963,18 +873,13 @@ class AdminPanel {
     
     // 继续作品保存流程（分离出来处理异步情况）
     continueArtworkSave(titleZh, titleEn, titleJa, descZh, descEn, descJa, category, medium, size, year, imageUrl) {
-        console.log('📦 继续保存流程，图片URL长度:', imageUrl.length);
-        
-        // 生成唯一的key
         const timestamp = Date.now();
-        const titleKey = this.currentEditingArtwork ? 
+        const titleKey = this.currentEditingArtwork ?
             dataManager.getArtworkById(this.currentEditingArtwork).titleKey :
             `artwork-${timestamp}-title`;
-        const descKey = this.currentEditingArtwork ? 
+        const descKey = this.currentEditingArtwork ?
             dataManager.getArtworkById(this.currentEditingArtwork).descriptionKey :
             `artwork-${timestamp}-desc`;
-        
-        console.log('🔑 生成键值:', { titleKey, descKey });
         
         // 更新多语言数据
         const i18nData = dataManager.getI18nData();
@@ -1178,15 +1083,13 @@ class AdminPanel {
     
     // 同步数据到前台（触发前台数据更新）
     syncDataToFrontend() {
-        console.log('🔄 触发前台数据同步...');
-        
         try {
             const timestamp = Date.now();
-            
-            // 方法1: 触发跨标签页storage事件
+
+            // 触发跨标签页storage事件
             localStorage.setItem('sync_timestamp', timestamp.toString());
-            
-            // 方法2: 使用BroadcastChannel API（现代浏览器）
+
+            // BroadcastChannel API
             if ('BroadcastChannel' in window) {
                 const channel = new BroadcastChannel('artwork_updates');
                 channel.postMessage({
@@ -1194,26 +1097,24 @@ class AdminPanel {
                     timestamp: timestamp,
                     keys: ['artworks_data', 'i18n_data', 'profile_data']
                 });
-                console.log('📡 通过BroadcastChannel发送数据更新通知');
             }
-            
-            // 方法3: 写入特殊标记文件触发更新
+
+            // 写入更新标记
             localStorage.setItem('last_admin_update', JSON.stringify({
                 timestamp: timestamp,
                 type: 'artwork_change',
                 action: 'sync_frontend'
             }));
-            
-            // 方法4: 如果是在iframe或popup中，使用postMessage
+
+            // postMessage（iframe/popup通信）
             if (window.opener) {
                 window.opener.postMessage({
                     type: 'ARTWORK_DATA_UPDATED',
                     timestamp: timestamp
                 }, '*');
-                console.log('📤 通过postMessage通知父窗口');
             }
-            
-            // 方法5: 强制触发storage事件（hack方法）
+
+            // 强制触发storage事件
             const storageEvent = new StorageEvent('storage', {
                 key: 'artworks_data',
                 newValue: localStorage.getItem('artworks_data'),
@@ -1221,19 +1122,16 @@ class AdminPanel {
                 storageArea: localStorage,
                 url: window.location.href
             });
-            
-            // 延迟触发，让其他页面有时间监听
+
             setTimeout(() => {
                 window.dispatchEvent(storageEvent);
-                console.log('🚀 手动触发storage事件');
             }, 100);
-            
-            this.showNotification('✅ 数据已同步到前台网站！', 'success');
-            console.log('✅ 前台数据同步完成 - 使用多重通知机制');
-            
+
+            this.showNotification('数据已同步到前台网站！', 'success');
+
         } catch (error) {
-            console.error('❌ 同步数据到前台时出错:', error);
-            this.showNotification('❌ 数据同步失败，请刷新前台页面', 'error');
+            console.error('同步数据到前台时出错:', error);
+            this.showNotification('数据同步失败，请刷新前台页面', 'error');
         }
     }
     
@@ -1278,8 +1176,6 @@ class AdminPanel {
         }
         
         if (confirm(`确定要删除选中的 ${selectedIds.length} 件作品吗？此操作不可撤销。`)) {
-            console.log('🗑️ 开始批量删除作品:', selectedIds);
-            
             let deletedCount = 0;
             const i18nData = dataManager.getI18nData();
             
@@ -1377,13 +1273,9 @@ window.closeArtworkModal = function() {
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
-    // 确保数据管理器已加载
     if (typeof dataManager === 'undefined') {
-        console.error('❌ dataManager未定义，延迟初始化AdminPanel');
-        // 重试机制
         const retryInit = () => {
             if (typeof dataManager !== 'undefined') {
-                console.log('✅ dataManager已加载，开始初始化AdminPanel');
                 window.adminPanel = new AdminPanel();
             } else {
                 setTimeout(retryInit, 100);
@@ -1391,7 +1283,6 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         retryInit();
     } else {
-        console.log('✅ dataManager可用，初始化AdminPanel');
         window.adminPanel = new AdminPanel();
     }
 });

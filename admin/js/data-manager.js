@@ -333,7 +333,28 @@ class DataManager {
     }
     
     setArtworks(artworks) {
-        localStorage.setItem(this.storageKeys.artworks, JSON.stringify(artworks));
+        try {
+            localStorage.setItem(this.storageKeys.artworks, JSON.stringify(artworks));
+        } catch (e) {
+            if (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014) {
+                console.error('localStorage空间不足，尝试压缩图片数据...');
+                // 尝试压缩：将过大的base64图片替换为占位符
+                const compressedArtworks = artworks.map(a => {
+                    if (a.image && a.image.length > 200 * 1024) {
+                        console.warn('作品 ' + a.id + ' 图片过大，已移除以节省空间');
+                        return { ...a, image: '' };
+                    }
+                    return a;
+                });
+                try {
+                    localStorage.setItem(this.storageKeys.artworks, JSON.stringify(compressedArtworks));
+                } catch (e2) {
+                    throw new Error('存储空间严重不足，请导出数据后清理浏览器缓存');
+                }
+            } else {
+                throw e;
+            }
+        }
         // 直接更新时间戳，避免递归
         const config = this.getSiteConfig() || {};
         config.lastUpdated = new Date().toISOString();
