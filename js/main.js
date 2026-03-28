@@ -271,8 +271,9 @@ function listenForDataUpdates() {
 
 // 重新加载作品数据
 function reloadArtworks() {
-    // 更新全局作品数据
-    window.artworks = getArtworksData();
+    // 更新模块级和全局作品数据
+    artworks = getArtworksData();
+    window.artworks = artworks;
     
     // 重新渲染作品集
     if (window.renderArtworks && typeof window.renderArtworks === 'function') {
@@ -285,13 +286,14 @@ function reloadArtworks() {
 
 // 重新加载多语言数据
 function reloadI18nData() {
-    // 更新全局i18n数据
-    const newI18nData = getI18nData();
-    Object.assign(i18n, newI18nData);
-    
-    // 重新应用当前语言
+    // 从localStorage重新合并i18n数据
+    if (typeof getI18nData === 'function') {
+        getI18nData();
+    }
+
+    // 强制重新应用当前语言（数据已更新，需要重新渲染）
     if (typeof switchLanguage === 'function' && window.currentLanguage) {
-        switchLanguage(window.currentLanguage);
+        switchLanguage(window.currentLanguage, true);
     }
 }
 
@@ -380,7 +382,8 @@ document.addEventListener('DOMContentLoaded', function() {
     initContactForm();
     initScrollEffects();
     initParallax();
-    
+    initImageFallbacks();
+
     // 启动数据监听
     listenForDataUpdates();
     
@@ -587,7 +590,7 @@ function getArtworksData() {
 }
 
 // 作品集数据
-const artworks = getArtworksData();
+let artworks = getArtworksData();
 
 // 初始化作品集
 function initGallery() {
@@ -879,6 +882,27 @@ function initScrollEffects() {
         el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
         observer.observe(el);
     });
+}
+
+// 图片加载失败处理
+function initImageFallbacks() {
+    const artistPhoto = document.querySelector('.image-frame img');
+    if (artistPhoto) {
+        artistPhoto.addEventListener('error', function() {
+            // 用SVG占位符替换破损图片
+            this.style.display = 'none';
+            const placeholder = document.createElement('div');
+            placeholder.style.cssText = `
+                width: 100%; height: 400px;
+                background: linear-gradient(135deg, #c8956d 0%, #8b6f47 100%);
+                display: flex; align-items: center; justify-content: center;
+                border-radius: var(--radius-lg);
+                font-size: 64px;
+            `;
+            placeholder.textContent = '🏺';
+            this.parentElement.appendChild(placeholder);
+        });
+    }
 }
 
 // 视差效果

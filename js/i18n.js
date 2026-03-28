@@ -76,30 +76,34 @@ const i18n = {
         'hero-line1': 'CREATE',
         'hero-line2': 'UNIQUE',
         'hero-line3': 'ART',
-        'hero-subtitle': 'Exploring infinite possibilities of color and form',
+        'hero-subtitle': 'Finding the perfection of imperfection in Wabi-sabi aesthetics',
+        'japanese-philosophy': 'Wabi-sabi • Mono no aware • Yugen',
         'cta-button': 'View Works',
-        'about-title': 'About the Artist',
-        'about-subtitle': 'Art is the bridge between the visible and invisible worlds',
-        'about-intro': 'I am an artist dedicated to contemporary art creation, committed to exploring the deep connections between humanity, nature, and society through diverse media. My works blend traditional techniques with modern concepts, hoping to resonate with audiences through unique visual language.',
+        'about-title': 'About the Potter',
+        'about-subtitle': 'A poetic dialogue between clay and flame',
+        'about-intro': 'A craftsman dedicated to ceramic art, deeply influenced by Japanese Wabi-sabi aesthetics. My works blend traditional pottery techniques with modern design concepts, seeking natural beauty in the dialogue between clay and fire. Each piece carries an understanding of the perfection of imperfection, embodying the traces of time and the warmth of handcraft.',
+        'philosophy-pottery': 'Pottery Techniques',
+        'philosophy-wagashi': 'Wagashi Aesthetics',
+        'philosophy-ikebana': 'Ikebana Spirit',
         'stat-artworks': 'Artworks',
         'stat-exhibitions': 'Exhibitions',
         'stat-experience': 'Years Experience',
-        'gallery-title': 'Gallery',
-        'gallery-subtitle': 'Every artwork is a projection of the inner world',
+        'gallery-title': 'Ceramic Collection',
+        'gallery-subtitle': 'Each piece carries the dialogue between clay and fire',
         'filter-all': 'All',
-        'filter-paintings': 'Paintings',
-        'filter-digital': 'Digital Art',
-        'filter-sketches': 'Sketches',
-        'process-title': 'Creative Process',
-        'process-subtitle': 'The artistic journey from concept to completion',
-        'step1-title': 'Inspiration Capture',
-        'step1-desc': 'Observing details in life, collecting inspiration from colors and forms',
-        'step2-title': 'Concept Development',
-        'step2-desc': 'Transforming abstract ideas into concrete visual concepts',
-        'step3-title': 'Creative Realization',
-        'step3-desc': 'Using various techniques and media to bring concepts to reality',
-        'step4-title': 'Detail Refinement',
-        'step4-desc': 'Fine-tuning every detail to achieve perfect presentation',
+        'filter-paintings': 'Tea Ware',
+        'filter-digital': 'Vases',
+        'filter-sketches': 'Tableware',
+        'process-title': 'Ceramic Craft',
+        'process-subtitle': 'The journey of life from clay to vessel',
+        'step1-title': 'Clay Selection',
+        'step1-desc': 'Selecting quality clay, kneading repeatedly to remove air bubbles',
+        'step2-title': 'Wheel Throwing',
+        'step2-desc': 'Shaping the vessel form with both hands on the pottery wheel',
+        'step3-title': 'Trimming & Glazing',
+        'step3-desc': 'Carefully refining the shape, adding textures and glaze colors',
+        'step4-title': 'Kiln Firing',
+        'step4-desc': 'Through the kiln fire, completing the transformation of clay and flame',
         'contact-title': 'Contact Me',
         'contact-subtitle': 'Let\'s explore the infinite possibilities of art together',
         'contact-email': 'Email',
@@ -132,33 +136,37 @@ const i18n = {
         'nav-gallery': '作品',
         'nav-process': '制作',
         'nav-contact': '連絡',
-        'hero-line1': '創造',
-        'hero-line2': 'ユニーク',
-        'hero-line3': 'アート',
-        'hero-subtitle': '色と形の無限の可能性を探求',
+        'hero-line1': '土と火',
+        'hero-line2': 'の間',
+        'hero-line3': '陶芸',
+        'hero-subtitle': '侘寂の美学の中で不完全の完璧を見つける',
+        'japanese-philosophy': '侘寂 • 物哀 • 幽玄',
         'cta-button': '作品を見る',
-        'about-title': 'アーティストについて',
-        'about-subtitle': '芸術は見える世界と見えない世界を結ぶ橋です',
-        'about-intro': '私は現代アート創作に専念するアーティストで、多様なメディアを通じて人間性、自然、社会の深いつながりを探求することに取り組んでいます。私の作品は伝統的な技法と現代的な概念を融合し、独特な視覚言語で観客との共鳴を希望しています。',
+        'about-title': '陶芸家について',
+        'about-subtitle': '土と炎の間の詩的な対話',
+        'about-intro': '陶芸創作に専念する職人で、日本の侘寂美学に深く影響を受けています。私の作品は伝統的な陶芸技法と現代のデザイン理念を融合し、土と火の対話の中で自然の美を追求しています。すべての作品は不完全の完璧への理解を込め、時の流れの痕跡と手仕事の温もりを体現しています。',
+        'philosophy-pottery': '陶芸技法',
+        'philosophy-wagashi': '和菓子美学',
+        'philosophy-ikebana': '華道精神',
         'stat-artworks': '作品',
         'stat-exhibitions': '展示',
         'stat-experience': '年の経験',
-        'gallery-title': 'ギャラリー',
-        'gallery-subtitle': 'すべての作品は内面世界の投影です',
+        'gallery-title': '陶芸作品集',
+        'gallery-subtitle': 'すべての作品は土と火の対話を込めています',
         'filter-all': 'すべて',
-        'filter-paintings': '絵画',
-        'filter-digital': 'デジタルアート',
-        'filter-sketches': 'スケッチ',
-        'process-title': '制作過程',
-        'process-subtitle': 'コンセプトから完成品までのアートの旅',
-        'step1-title': 'インスピレーション捕捉',
-        'step1-desc': '生活の細部を観察し、色と形からインスピレーションを収集',
-        'step2-title': 'コンセプト構想',
-        'step2-desc': '抽象的なアイデアを具体的な視覚コンセプトに変換',
-        'step3-title': '創作実現',
-        'step3-desc': '様々な技法とメディアを使用してコンセプトを現実化',
-        'step4-title': '詳細完善',
-        'step4-desc': '細部まで磨き上げ、完璧な表現を実現',
+        'filter-paintings': '茶器',
+        'filter-digital': '花器',
+        'filter-sketches': '食器',
+        'process-title': '陶芸工芸',
+        'process-subtitle': '土から器への生命の旅',
+        'step1-title': '土選び・練り',
+        'step1-desc': '良質な陶土を厳選し、繰り返し練って気泡を除去',
+        'step2-title': 'ろくろ成形',
+        'step2-desc': 'ろくろの上で両手で器の形を作り上げる',
+        'step3-title': '削り・装飾',
+        'step3-desc': '丁寧に形を整え、紋様と釉薬を施す',
+        'step4-title': '焼成',
+        'step4-desc': '窯の火で鍛え、土と火の変容を完成させる',
         'contact-title': 'お問い合わせ',
         'contact-subtitle': '一緒にアートの無限の可能性を探求しましょう',
         'contact-email': 'メール',
@@ -187,7 +195,7 @@ const i18n = {
 };
 
 // 当前语言状态
-let currentLanguage = 'zh';
+let currentLanguage = null; // null表示未初始化，避免首次switchLanguage被跳过
 
 // 从localStorage获取多语言数据（支持后台管理修改）
 function getI18nData() {
@@ -209,28 +217,30 @@ function getI18nData() {
 }
 
 // 获取文本
-function getText(key, lang = currentLanguage) {
+function getText(key, lang) {
+    lang = lang || currentLanguage || 'zh';
     return i18n[lang] && i18n[lang][key] ? i18n[lang][key] : key;
 }
 
 // 主要语言切换函数 - 增强错误处理版本
-function switchLanguage(lang) {
-    console.log(`🌐 切换语言到: ${lang}`);
-    
+// force参数: 为true时强制刷新（即使语言相同，用于数据更新后重新渲染）
+function switchLanguage(lang, force) {
+    console.log(`🌐 切换语言到: ${lang}${force ? ' (强制刷新)' : ''}`);
+
     try {
         // 验证语言参数
         if (!lang || typeof lang !== 'string') {
             console.error('❌ 语言参数无效:', lang);
             return false;
         }
-        
+
         if (!['zh', 'en', 'ja'].includes(lang)) {
             console.error('❌ 不支持的语言:', lang);
             return false;
         }
-        
-        // 防止重复切换
-        if (currentLanguage === lang) {
+
+        // 防止重复切换（force模式跳过此检查）
+        if (!force && currentLanguage === lang) {
             console.log('✅ 已经是当前语言');
             return true;
         }

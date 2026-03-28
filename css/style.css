@@ -64,25 +64,27 @@
     --radius-xl: 24px;
 }
 
-/* 深色主题 */
+/* 深色主题 - 侘寂夜色 */
 [data-theme="dark"] {
-    /* 深色主题颜色系统 */
-    --primary-color: #e0e0e0;
-    --secondary-color: #2a2a2a;
-    --accent-color: #ff7979;
-    --text-primary: #e0e0e0;
-    --text-secondary: #b0b0b0;
-    --text-light: #888888;
-    --white: #1a1a1a;
-    --black: #ffffff;
-    --background-color: #1a1a1a;
-    --surface-color: #2a2a2a;
-    --border-color: #404040;
-    
-    /* 深色主题渐变 */
-    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --gradient-accent: linear-gradient(45deg, #ff7979, #fdcb6e);
-    
+    /* 深色主题颜色系统 - 保持陶艺质感 */
+    --primary-color: #d4c8be;
+    --secondary-color: #2a2623;
+    --accent-color: #d4a574; /* 温暖陶土橘 */
+    --accent-secondary: #a07850;
+    --text-primary: #d4c8be;
+    --text-secondary: #9a8c84;
+    --text-light: #6b5d56;
+    --white: #1e1a17;
+    --black: #f7f5f3;
+    --background-color: #1e1a17;
+    --surface-color: #2a2623;
+    --border-color: #3d3633;
+
+    /* 深色主题渐变 - 陶土质感 */
+    --gradient-primary: linear-gradient(135deg, #d4a574 0%, #a07850 100%);
+    --gradient-accent: linear-gradient(45deg, #c8956d, #d4af37);
+    --gradient-clay: linear-gradient(180deg, #2a2623 0%, #1e1a17 100%);
+
     /* 深色主题阴影 */
     --shadow-sm: 0 2px 4px rgba(0,0,0,0.3);
     --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
@@ -802,6 +804,20 @@ section {
     height: 400px;
     object-fit: cover;
     transition: transform var(--transition-slow);
+    background: var(--gradient-clay);
+}
+
+/* 艺术家照片加载失败时的占位符 */
+.image-frame img[src$="artist-photo.jpg"] {
+    object-fit: contain;
+}
+
+.image-frame img::after {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: var(--gradient-primary);
 }
 
 .image-frame:hover img {
