@@ -52,6 +52,9 @@ class AdminPanel {
         document.getElementById('artwork-image-input').addEventListener('change', (e) => {
             this.handleImageUpload(e);
         });
+
+        // 批量上传（按钮 + 拖拽区域）
+        this.initializeBatchUpload();
         
         // 个人信息保存
         document.getElementById('save-profile-btn').addEventListener('click', () => {
@@ -106,6 +109,44 @@ class AdminPanel {
                 this.closeArtworkModal();
             }
         });
+    }
+
+    // 初始化批量上传相关事件
+    initializeBatchUpload() {
+        const batchUploadBtn = document.getElementById('batch-upload-btn');
+        const dragArea = document.getElementById('drag-upload-area');
+        const browseBtn = document.getElementById('browse-files-btn');
+        const fileInput = document.getElementById('file-input');
+
+        if (batchUploadBtn && dragArea) {
+            batchUploadBtn.addEventListener('click', () => {
+                const isHidden = dragArea.style.display === 'none' || !dragArea.style.display;
+                dragArea.style.display = isHidden ? 'block' : 'none';
+            });
+        }
+
+        if (browseBtn && fileInput) {
+            browseBtn.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', (e) => {
+                this.handleBatchFiles(e.target.files);
+                e.target.value = '';
+            });
+        }
+
+        if (dragArea) {
+            dragArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dragArea.classList.add('dragover');
+            });
+            dragArea.addEventListener('dragleave', () => {
+                dragArea.classList.remove('dragover');
+            });
+            dragArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dragArea.classList.remove('dragover');
+                this.handleBatchFiles(e.dataTransfer.files);
+            });
+        }
     }
     
     // 切换页面部分
@@ -218,7 +259,19 @@ class AdminPanel {
             }
             
             console.log(`🔍 过滤后显示 ${filteredArtworks.length} 件作品`);
-            
+
+            // 更新作品统计信息
+            const totalCountEl = document.getElementById('total-artworks-count');
+            if (totalCountEl) {
+                totalCountEl.textContent = `共 ${artworks.length} 件作品`;
+            }
+            const filteredCountEl = document.getElementById('filtered-count');
+            if (filteredCountEl) {
+                const isFiltered = filteredArtworks.length !== artworks.length;
+                filteredCountEl.style.display = isFiltered ? 'inline' : 'none';
+                filteredCountEl.textContent = `显示 ${filteredArtworks.length} 件`;
+            }
+
             // 清空网格
             grid.innerHTML = '';
             
@@ -242,8 +295,6 @@ class AdminPanel {
                     } else if (artwork.descriptionKey && !artwork.descriptionKey.startsWith('artwork-')) {
                         desc = artwork.descriptionKey;
                     }
-                    
-                    console.log(`🎨 渲染作品 ${artwork.id}: "${title}"`);
                     
                     const card = this.createArtworkCard(artwork, title, desc);
                     grid.appendChild(card);
@@ -314,9 +365,6 @@ class AdminPanel {
             </div>
         `;
         
-        console.log(`📋 生成的卡片HTML for ID ${artwork.id}:`);
-        console.log(card.outerHTML.substring(0, 500) + '...');
-        
         // 绑定事件监听器（避免onclick依赖全局变量）
         this.bindCardEvents(card, artwork);
         
@@ -326,63 +374,40 @@ class AdminPanel {
     // 绑定卡片事件
     bindCardEvents(card, artwork) {
         try {
-            console.log(`🔄 开始绑定作品 ${artwork.id} 的事件...`);
-            
             // 预览按钮
             const previewBtn = card.querySelector('.artwork-preview-btn');
-            console.log('🔍 预览按钮查找结果:', previewBtn);
             if (previewBtn) {
                 previewBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    console.log('🖱️ 点击预览按钮，作品ID:', artwork.id);
                     this.previewArtwork(artwork.id);
                 });
-                console.log('✅ 预览按钮事件已绑定');
             } else {
                 console.warn('⚠️ 预览按钮未找到');
             }
             
             // 编辑按钮
             const editBtn = card.querySelector('.artwork-edit-btn');
-            console.log('🔍 编辑按钮查找结果:', editBtn);
             if (editBtn) {
-                // 添加多种事件监听来测试
                 editBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('🖱️ 点击编辑按钮，作品ID:', artwork.id);
-                    alert(`准备编辑作品 ${artwork.id}`);
                     this.editArtwork(artwork.id);
                 });
-                
-                // 添加鼠标事件测试
-                editBtn.addEventListener('mousedown', () => {
-                    console.log('🖱️ 编辑按钮 mousedown，作品ID:', artwork.id);
-                });
-                
-                editBtn.addEventListener('mouseup', () => {
-                    console.log('🖱️ 编辑按钮 mouseup，作品ID:', artwork.id);
-                });
-                
-                console.log('✅ 编辑按钮事件已绑定');
             } else {
                 console.warn('⚠️ 编辑按钮未找到');
             }
             
             // 删除按钮
             const deleteBtn = card.querySelector('.artwork-delete-btn');
-            console.log('🔍 删除按钮查找结果:', deleteBtn);
             if (deleteBtn) {
                 deleteBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    console.log('🖱️ 点击删除按钮，作品ID:', artwork.id);
                     this.deleteArtwork(artwork.id);
                 });
-                console.log('✅ 删除按钮事件已绑定');
             } else {
                 console.warn('⚠️ 删除按钮未找到');
             }
-            
+
             // 复选框
             const checkbox = card.querySelector('.artwork-select');
             if (checkbox) {
@@ -390,8 +415,6 @@ class AdminPanel {
                     this.updateBatchActions();
                 });
             }
-            
-            console.log(`✅ 成功绑定作品卡片事件，ID: ${artwork.id}`);
         } catch (error) {
             console.error('❌ 绑定卡片事件失败:', error);
         }
@@ -498,142 +521,226 @@ class AdminPanel {
         document.getElementById('image-preview').innerHTML = '';
     }
     
-    // 优化的图片上传处理
+    // 判断文件是否为支持的图片类型
+    isImageFile(file) {
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
+        if (file.type && allowedTypes.includes(file.type.toLowerCase())) {
+            return true;
+        }
+        // 部分系统/浏览器不提供MIME类型，回退到扩展名判断
+        return /\.(jpe?g|png|gif|webp|bmp)$/i.test(file.name || '');
+    }
+
+    // 图片上传处理（单张，作品编辑表单内）
     handleImageUpload(e) {
         const file = e.target.files[0];
         if (!file) {
-            console.log('📸 用户取消了文件选择');
             return;
         }
-        
+
         console.log('📸 开始处理图片上传:', file.name, '大小:', (file.size / 1024 / 1024).toFixed(2) + 'MB');
-        
-        // 验证文件类型
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-        if (!allowedTypes.includes(file.type.toLowerCase())) {
+
+        if (!this.isImageFile(file)) {
             this.showNotification('请选择图片文件（支持 JPG, PNG, GIF, WebP）', 'error');
-            e.target.value = ''; // 清空input
+            e.target.value = '';
             return;
         }
-        
-        // 验证文件大小（最大10MB，增加限制）
+
         const maxSize = 10 * 1024 * 1024; // 10MB
         if (file.size > maxSize) {
             this.showNotification('图片文件大小不能超过10MB', 'error');
             e.target.value = '';
             return;
         }
-        
-        // 显示上传进度
+
         this.showUploadProgress(true);
-        
-        const reader = new FileReader();
-        
-        reader.onload = (event) => {
-            try {
-                const imageUrl = event.target.result;
-                
-                // 验证base64数据完整性
-                if (!imageUrl || !imageUrl.startsWith('data:image/')) {
-                    throw new Error('图片数据格式无效');
-                }
-                
-                // 预处理图片（可选：压缩大图片）
-                this.processAndDisplayImage(imageUrl, file);
-                
-            } catch (error) {
+
+        this.readAndCompressImage(file)
+            .then((image) => {
+                this.tempImageData = {
+                    url: image.url,
+                    name: image.name,
+                    size: image.size,
+                    type: image.type,
+                    originalSize: file.size
+                };
+                this.displayImagePreview(image.url, image.name);
+                this.showNotification('图片已就绪，保存作品后生效', 'success');
+                console.log('✅ 图片上传处理完成');
+            })
+            .catch((error) => {
                 console.error('❌ 图片处理失败:', error);
-                this.showNotification('图片处理失败：' + error.message, 'error');
+                this.showNotification(error.message || '图片处理失败，请重试', 'error');
+                e.target.value = '';
+            })
+            .finally(() => {
                 this.showUploadProgress(false);
-            }
-        };
-        
-        reader.onerror = (error) => {
-            console.error('❌ 图片读取失败:', error);
-            this.showNotification('图片读取失败，请重试', 'error');
-            this.showUploadProgress(false);
-        };
-        
-        // 开始读取文件
-        reader.readAsDataURL(file);
-    }
-    
-    // 处理并显示图片
-    processAndDisplayImage(imageUrl, file) {
-        // 检查是否需要压缩（大于2MB的图片）
-        if (file.size > 2 * 1024 * 1024) {
-            console.log('🔄 图片较大，进行压缩处理...');
-            this.compressImage(imageUrl, file, (compressedUrl, compressedFile) => {
-                this.finalizeImageUpload(compressedUrl, compressedFile || file);
             });
+    }
+
+    // 读取并压缩图片文件，返回 Promise<{url, name, size, type}>
+    readAndCompressImage(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+
+            reader.onload = (event) => {
+                const originalUrl = event.target.result;
+                if (!originalUrl || !originalUrl.startsWith('data:image/')) {
+                    reject(new Error('图片数据格式无效'));
+                    return;
+                }
+
+                // 小图片直接使用原图，避免无谓的质量损失（GIF动画也得以保留）
+                if (file.size <= 300 * 1024) {
+                    resolve({ url: originalUrl, name: file.name, size: file.size, type: file.type });
+                    return;
+                }
+
+                const img = new Image();
+                img.onload = () => {
+                    try {
+                        const compressedUrl = this.compressToDataUrl(img);
+                        // 压缩结果反而更大时使用原图
+                        const finalUrl = compressedUrl.length < originalUrl.length ? compressedUrl : originalUrl;
+                        console.log('🗜️ 图片压缩完成:',
+                            '原始大小:', (file.size / 1024 / 1024).toFixed(2) + 'MB',
+                            '压缩后大小:', (finalUrl.length * 0.75 / 1024 / 1024).toFixed(2) + 'MB'
+                        );
+                        resolve({
+                            url: finalUrl,
+                            name: file.name,
+                            size: Math.round(finalUrl.length * 0.75),
+                            type: finalUrl === originalUrl ? file.type : 'image/jpeg'
+                        });
+                    } catch (error) {
+                        console.warn('⚠️ 图片压缩失败，使用原图:', error);
+                        resolve({ url: originalUrl, name: file.name, size: file.size, type: file.type });
+                    }
+                };
+                img.onerror = () => reject(new Error('图片解码失败，文件可能已损坏'));
+                img.src = originalUrl;
+            };
+
+            reader.onerror = () => reject(new Error('图片读取失败，请重试'));
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // 将图片绘制到canvas并压缩为JPEG
+    // 注意：canvas不支持输出GIF/BMP等格式，统一转为JPEG以避免回退成更大的PNG
+    compressToDataUrl(img) {
+        const maxDimension = 1280;
+        let width = img.naturalWidth || img.width;
+        let height = img.naturalHeight || img.height;
+
+        if (width > maxDimension || height > maxDimension) {
+            const scale = maxDimension / Math.max(width, height);
+            width = Math.round(width * scale);
+            height = Math.round(height * scale);
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+
+        // 透明背景填白，避免JPEG输出变黑
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // 逐步降低质量，控制单张图片占用的localStorage空间
+        const maxLength = 700 * 1024; // base64字符数上限（约520KB二进制）
+        let quality = 0.85;
+        let dataUrl = canvas.toDataURL('image/jpeg', quality);
+        while (dataUrl.length > maxLength && quality > 0.4) {
+            quality -= 0.15;
+            dataUrl = canvas.toDataURL('image/jpeg', quality);
+        }
+        return dataUrl;
+    }
+
+    // 批量上传图片文件，每张图片自动创建一个作品
+    async handleBatchFiles(fileList) {
+        const files = Array.from(fileList || []);
+        if (files.length === 0) return;
+
+        const maxSize = 10 * 1024 * 1024;
+        const validFiles = files.filter(file => this.isImageFile(file) && file.size <= maxSize);
+        const skipped = files.length - validFiles.length;
+
+        if (validFiles.length === 0) {
+            this.showNotification('没有可上传的图片（支持 JPG/PNG/GIF/WebP，单张最大10MB）', 'error');
+            return;
+        }
+
+        this.showUploadProgress(true);
+
+        let saved = 0;
+        let failed = 0;
+        let quotaHit = false;
+
+        for (const file of validFiles) {
+            try {
+                const image = await this.readAndCompressImage(file);
+                this.saveBatchArtwork(image, file);
+                saved++;
+            } catch (error) {
+                if (error.isQuotaError) {
+                    quotaHit = true;
+                    break;
+                }
+                console.error('❌ 批量上传文件失败:', file.name, error);
+                failed++;
+            }
+        }
+
+        this.showUploadProgress(false);
+        this.loadArtworks();
+        this.loadDashboardData();
+        if (saved > 0) {
+            this.syncDataToFrontend();
+        }
+
+        if (quotaHit) {
+            this.showNotification(`已上传 ${saved} 张后浏览器存储空间不足，请删除部分作品后再试`, 'error');
         } else {
-            this.finalizeImageUpload(imageUrl, file);
+            let message = `批量上传完成：成功 ${saved} 张`;
+            if (failed > 0) message += `，失败 ${failed} 张`;
+            if (skipped > 0) message += `，跳过 ${skipped} 个非图片或超大文件`;
+            this.showNotification(message, failed > 0 ? 'error' : 'success');
         }
     }
-    
-    // 完成图片上传处理
-    finalizeImageUpload(imageUrl, file) {
-        this.displayImagePreview(imageUrl, file.name);
-        
-        // 保存图片数据到临时存储
-        this.tempImageData = {
-            url: imageUrl,
-            name: file.name,
-            size: file.size,
-            type: file.type,
-            originalSize: file.size
-        };
-        
-        this.showUploadProgress(false);
-        this.showNotification('图片上传成功！', 'success');
-        console.log('✅ 图片上传处理完成');
-    }
-    
-    // 图片压缩功能（可选）
-    compressImage(imageUrl, file, callback) {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const img = new Image();
-        
-        img.onload = () => {
-            // 计算压缩后的尺寸（保持宽高比）
-            let { width, height } = img;
-            const maxDimension = 1920; // 最大尺寸
-            
-            if (width > maxDimension || height > maxDimension) {
-                if (width > height) {
-                    height = (height * maxDimension) / width;
-                    width = maxDimension;
-                } else {
-                    width = (width * maxDimension) / height;
-                    height = maxDimension;
-                }
+
+    // 为批量上传的图片创建作品记录
+    saveBatchArtwork(image, file) {
+        const baseName = (file.name || '未命名作品').replace(/\.[^.]+$/, '');
+        const uniqueId = `${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+        const titleKey = `artwork-${uniqueId}-title`;
+        const descKey = `artwork-${uniqueId}-desc`;
+
+        const i18nData = dataManager.getI18nData();
+        ['zh', 'en', 'ja'].forEach(lang => {
+            i18nData[lang][titleKey] = baseName;
+            i18nData[lang][descKey] = '';
+        });
+        dataManager.setI18nData(i18nData);
+
+        const artwork = dataManager.addArtwork({
+            titleKey: titleKey,
+            descriptionKey: descKey,
+            category: 'paintings',
+            image: image.url,
+            details: {
+                medium: '未指定',
+                size: '未指定',
+                year: new Date().getFullYear().toString()
             }
-            
-            canvas.width = width;
-            canvas.height = height;
-            
-            // 绘制压缩后的图片
-            ctx.drawImage(img, 0, 0, width, height);
-            
-            // 输出压缩后的图片
-            const quality = 0.8; // 压缩质量
-            const compressedUrl = canvas.toDataURL(file.type, quality);
-            
-            console.log('🗜️ 图片压缩完成:', 
-                '原始大小:', (file.size / 1024 / 1024).toFixed(2) + 'MB',
-                '压缩后大小:', (compressedUrl.length * 0.75 / 1024 / 1024).toFixed(2) + 'MB'
-            );
-            
-            callback(compressedUrl, null);
-        };
-        
-        img.onerror = () => {
-            console.warn('⚠️ 图片压缩失败，使用原图');
-            callback(imageUrl, file);
-        };
-        
-        img.src = imageUrl;
+        });
+
+        if (!artwork) {
+            throw new Error('作品保存失败');
+        }
     }
     
     // 显示上传进度
@@ -664,8 +771,8 @@ class AdminPanel {
                 document.body.appendChild(progressEl);
             }
         } else {
-            if (progressEl) {
-                document.body.removeChild(progressEl);
+            if (progressEl && progressEl.parentNode) {
+                progressEl.parentNode.removeChild(progressEl);
             }
         }
     }
@@ -922,6 +1029,11 @@ class AdminPanel {
             
         } catch (error) {
             console.error('❌ 执行保存时发生错误:', error);
+            if (error.isQuotaError) {
+                this.showNotification('浏览器存储空间不足，无法保存。请删除部分作品，或改用"网络图片URL"方式添加图片', 'error');
+                this.showSaveProgress(false);
+                return;
+            }
             throw error;
         }
     }

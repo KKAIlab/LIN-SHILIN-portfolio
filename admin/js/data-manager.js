@@ -326,14 +326,35 @@ class DataManager {
         this.setSiteConfig(defaultConfig);
     }
     
+    // 安全写入localStorage：捕获配额溢出错误并转换为可识别的错误类型
+    // base64图片存储很容易触达浏览器约5MB的localStorage上限
+    safeSetItem(key, value) {
+        try {
+            localStorage.setItem(key, value);
+        } catch (error) {
+            const isQuota = error && (
+                error.name === 'QuotaExceededError' ||
+                error.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+                error.code === 22
+            );
+            console.error(`❌ localStorage写入失败 [${key}]${isQuota ? '（存储空间不足）' : ''}:`, error);
+            if (isQuota) {
+                const quotaError = new Error('浏览器存储空间不足');
+                quotaError.isQuotaError = true;
+                throw quotaError;
+            }
+            throw error;
+        }
+    }
+
     // 作品数据操作
     getArtworks() {
         const data = localStorage.getItem(this.storageKeys.artworks);
         return data ? JSON.parse(data) : [];
     }
-    
+
     setArtworks(artworks) {
-        localStorage.setItem(this.storageKeys.artworks, JSON.stringify(artworks));
+        this.safeSetItem(this.storageKeys.artworks, JSON.stringify(artworks));
         // 直接更新时间戳，避免递归
         const config = this.getSiteConfig() || {};
         config.lastUpdated = new Date().toISOString();
@@ -379,7 +400,7 @@ class DataManager {
     }
     
     setProfile(profile) {
-        localStorage.setItem(this.storageKeys.profile, JSON.stringify(profile));
+        this.safeSetItem(this.storageKeys.profile, JSON.stringify(profile));
         // 直接更新时间戳，避免递归
         const config = this.getSiteConfig() || {};
         config.lastUpdated = new Date().toISOString();
@@ -400,7 +421,7 @@ class DataManager {
     }
     
     setI18nData(i18nData) {
-        localStorage.setItem(this.storageKeys.i18n, JSON.stringify(i18nData));
+        this.safeSetItem(this.storageKeys.i18n, JSON.stringify(i18nData));
         // 直接更新时间戳，避免递归
         const config = this.getSiteConfig() || {};
         config.lastUpdated = new Date().toISOString();
