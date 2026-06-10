@@ -58,8 +58,10 @@
         <div class="topbar">
             <h1 id="page-title">概览</h1>
             <div class="topbar-actions">
-                <button id="save-all-btn" class="btn btn-primary">保存所有更改</button>
-                <a href="../index.html" target="_blank" class="btn btn-secondary">预览网站</a>
+                <span id="publish-status" style="font-size: 13px; margin-right: 8px;"></span>
+                <button id="publish-btn" class="btn btn-primary">🚀 发布到网站</button>
+                <a href="../index.html#preview" target="_blank" class="btn btn-secondary" title="预览未发布的草稿效果">预览草稿</a>
+                <a href="../index.html" target="_blank" class="btn btn-outline" title="查看已发布的正式网站">查看网站</a>
             </div>
         </div>
         
@@ -218,19 +220,36 @@
         <!-- 个人信息页面 -->
         <section id="profile-section" class="content-section">
             <div class="profile-form">
-                <div class="form-group">
-                    <label for="artist-name">艺术家姓名</label>
-                    <input type="text" id="artist-name" value="林士林">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="artist-name">艺术家姓名（中文）</label>
+                        <input type="text" id="artist-name">
+                    </div>
+                    <div class="form-group">
+                        <label for="artist-name-en">姓名（英文，选填）</label>
+                        <input type="text" id="artist-name-en">
+                    </div>
+                    <div class="form-group">
+                        <label for="artist-name-ja">姓名（日文，选填）</label>
+                        <input type="text" id="artist-name-ja">
+                    </div>
                 </div>
-                
+
+                <div class="form-group">
+                    <label>艺术家照片</label>
+                    <div id="artist-photo-preview" style="margin-bottom: 10px;"></div>
+                    <label for="artist-photo-input" class="btn btn-outline" style="cursor: pointer;">📷 上传照片</label>
+                    <input type="file" id="artist-photo-input" accept="image/*" style="display: none;">
+                </div>
+
                 <div class="form-group">
                     <label for="artist-bio">个人简介</label>
-                    <textarea id="artist-bio" rows="5">我是一位专注于当代艺术创作的艺术家，致力于通过多样化的媒介探索人性、自然与社会的深层联系。我的作品融合了传统技法与现代理念，希望通过独特的视觉语言与观众产生共鸣。</textarea>
+                    <textarea id="artist-bio" rows="5"></textarea>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="contact-email">联系邮箱</label>
-                    <input type="email" id="contact-email" value="linshilin.art@gmail.com">
+                    <input type="email" id="contact-email">
                 </div>
                 
                 <div class="form-row">
@@ -255,28 +274,56 @@
         <!-- 网站设置页面 -->
         <section id="settings-section" class="content-section">
             <div class="settings-form">
-                <div class="form-group">
-                    <label for="site-title">网站标题</label>
-                    <input type="text" id="site-title" value="林士林作品集 | LIN SHILIN Portfolio">
+                <div class="form-group" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px;">
+                    <label style="font-size: 16px; font-weight: 600;">🚀 发布设置（GitHub）</label>
+                    <p style="font-size: 13px; color: #718096; margin: 8px 0 16px;">
+                        发布功能会把您的修改（作品、图片、个人信息）提交到 GitHub 仓库，
+                        网站会在1-2分钟内自动更新，所有访客都能看到。<br>
+                        需要一个 GitHub Token：GitHub → Settings → Developer settings →
+                        Fine-grained personal access tokens → 创建并选择本仓库，授予
+                        <strong>Contents: Read and write</strong> 权限。<br>
+                        <strong>Token 只保存在当前浏览器中，不会上传到任何地方。</strong>
+                    </p>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="publish-owner">仓库所有者</label>
+                            <input type="text" id="publish-owner" placeholder="KKAIlab">
+                        </div>
+                        <div class="form-group">
+                            <label for="publish-repo">仓库名</label>
+                            <input type="text" id="publish-repo" placeholder="LIN-SHILIN-portfolio">
+                        </div>
+                        <div class="form-group">
+                            <label for="publish-branch">分支</label>
+                            <input type="text" id="publish-branch" placeholder="main">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="publish-token">GitHub Token</label>
+                        <input type="password" id="publish-token" placeholder="github_pat_...">
+                    </div>
+                    <div class="action-buttons">
+                        <button id="save-publish-config-btn" class="btn btn-primary">保存发布设置</button>
+                        <button id="test-publish-config-btn" class="btn btn-outline">测试连接</button>
+                    </div>
+                    <p id="publish-config-status" style="font-size: 13px; margin-top: 10px;"></p>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="change-password">更改管理密码</label>
                     <input type="password" id="change-password" placeholder="输入新密码">
                     <button id="update-password-btn" class="btn btn-secondary">更新密码</button>
                 </div>
-                
+
                 <div class="form-group">
                     <label>数据管理</label>
                     <div class="action-buttons">
-                        <button id="export-data-btn" class="btn btn-outline">导出数据</button>
+                        <button id="export-data-btn" class="btn btn-outline">导出备份</button>
                         <input type="file" id="import-data-input" accept=".json" style="display: none;">
-                        <button id="import-data-btn" class="btn btn-outline">导入数据</button>
-                        <button id="reset-data-btn" class="btn btn-danger">重置所有数据</button>
+                        <button id="import-data-btn" class="btn btn-outline">导入备份</button>
+                        <button id="reset-data-btn" class="btn btn-danger">放弃未发布的修改</button>
                     </div>
                 </div>
-                
-                <button id="save-settings-btn" class="btn btn-primary">保存设置</button>
             </div>
         </section>
     </main>
@@ -383,10 +430,11 @@
         <p>处理中...</p>
     </div>
     
+    <script src="../data/site-data.js"></script>
     <script src="./js/theme-manager.js"></script>
     <script src="./js/auth.js"></script>
     <script src="./js/data-manager.js"></script>
+    <script src="./js/publisher.js"></script>
     <script src="./js/admin.js"></script>
-    <script src="./js/deploy-helper.js"></script>
 </body>
 </html>

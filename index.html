@@ -261,13 +261,7 @@
         <div class="container">
             <p>&copy; 2025 <span data-i18n="artist-name">林士林</span>. <span data-i18n="copyright">All rights reserved</span>.</p>
             <p style="margin-top: 10px; font-size: 12px; opacity: 0.7;">
-                <a href="./admin/login.html" style="color: inherit; text-decoration: none; margin-right: 15px;">🔒 管理后台</a>
-                <button onclick="window.refreshProfileData()" style="background: none; border: 1px solid #ccc; color: inherit; padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; opacity: 0.6; margin-right: 10px;" title="手动刷新个人信息">
-                    🔄 刷新数据
-                </button>
-                <button onclick="window.exportSiteData()" style="background: none; border: 1px solid #c8956d; color: #c8956d; padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; opacity: 0.8;" title="导出网站数据到文件">
-                    📤 导出数据
-                </button>
+                <a href="./admin/login.html" style="color: inherit; text-decoration: none;">🔒 管理后台</a>
             </p>
         </div>
     </footer>
@@ -285,60 +279,8 @@
         </div>
     </div>
 
-    <!-- 紧急语言切换备用脚本 -->
-    <script>
-        // 紧急备用语言切换函数
-        window.emergencyLanguageSwitch = function(lang) {
-            console.log('🚨 使用紧急备用语言切换:', lang);
-            
-            // 直接更新按钮状态
-            document.querySelectorAll('.lang-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.getAttribute('data-lang') === lang) {
-                    btn.classList.add('active');
-                }
-            });
-            
-            // 保存语言偏好
-            try {
-                localStorage.setItem('preferredLanguage', lang);
-            } catch (e) {
-                console.warn('保存语言偏好失败:', e);
-            }
-            
-            // 调用主要语言切换函数
-            if (window.switchLanguage && typeof window.switchLanguage === 'function') {
-                window.switchLanguage(lang);
-            } else {
-                console.warn('主要语言切换函数不可用，等待加载...');
-                setTimeout(() => {
-                    if (window.switchLanguage) {
-                        window.switchLanguage(lang);
-                    }
-                }, 1000);
-            }
-        };
-        
-        // 页面加载后添加备用事件监听器
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(() => {
-                const langButtons = document.querySelectorAll('.lang-btn');
-                langButtons.forEach(button => {
-                    const lang = button.getAttribute('data-lang');
-                    if (lang && !button.getAttribute('data-emergency-bound')) {
-                        button.addEventListener('click', function() {
-                            window.emergencyLanguageSwitch(lang);
-                        });
-                        button.setAttribute('data-emergency-bound', 'true');
-                        console.log('✅ 紧急绑定语言按钮:', lang);
-                    }
-                });
-            }, 2000); // 2秒后执行，确保主脚本有机会先运行
-        });
-    </script>
-    
     <!-- JavaScript -->
-    <script src="./js/debug-monitor.js"></script>
+    <script src="./data/site-data.js"></script>
     <script src="./js/i18n.js"></script>
     <script src="./js/main.js"></script>
 </body>

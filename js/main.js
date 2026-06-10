@@ -1,364 +1,88 @@
-// 更新个人信息和统计数据 - 与语言切换协同版本
-function updateProfileData() {
-    const storedProfile = localStorage.getItem('profile_data');
-    if (!storedProfile) {
-        console.log('📝 [个人信息] 没有找到profile_data，跳过更新');
-        return;
-    }
-    
-    const profile = JSON.parse(storedProfile);
-    console.log('📝 [个人信息] 开始更新个人信息:', profile);
-    
-    // 等待DOM完全加载
-    if (document.readyState !== 'complete') {
-        setTimeout(() => updateProfileData(), 100);
-        return;
-    }
-    
-    let updatedCount = 0;
-    
-    // 智能更新艺术家姓名（检查是否与默认翻译不同）
-    const artistNameElements = document.querySelectorAll('[data-i18n="artist-name"]');
-    artistNameElements.forEach((element, index) => {
-        // 检查当前语言的默认翻译
-        const currentLang = window.currentLanguage || 'zh';
-        const defaultTranslation = window.i18nData && window.i18nData[currentLang] && window.i18nData[currentLang]['artist-name'];
-        
-        // 只有当个人信息与默认翻译不同时才应用
-        if (profile.name && profile.name !== defaultTranslation) {
-            const oldText = element.textContent;
-            element.textContent = profile.name;
-            element.setAttribute('data-profile-updated', 'true');
-            if (oldText !== profile.name) {
-                console.log(`📝 [个人信息] [${index}] 应用自定义艺术家姓名:`, oldText, ' -> ', profile.name);
-                updatedCount++;
+// ============================================================
+// 数据访问层：网站内容来自 data/site-data.js（仓库内的唯一数据源）
+// 后台管理通过 GitHub API 更新该文件，发布后对所有访客生效。
+// ============================================================
+
+// 获取网站数据（支持后台草稿预览模式：URL带 #preview 时读取本地草稿）
+function getSiteData() {
+    if (window.location.hash.includes('preview')) {
+        try {
+            const draft = localStorage.getItem('draft_site_data');
+            if (draft) {
+                console.log('👁 草稿预览模式：显示本地未发布的草稿数据');
+                return JSON.parse(draft);
             }
-        } else {
-            // 移除保护标记，允许使用翻译
-            element.removeAttribute('data-profile-updated');
-            console.log(`📝 [个人信息] [${index}] 艺术家姓名使用默认翻译，移除保护`);
+        } catch (error) {
+            console.warn('⚠️ 读取草稿数据失败，使用已发布数据:', error);
         }
+    }
+    return window.SITE_DATA || null;
+}
+
+// 取多语言字段的当前语言文本（兼容纯字符串）
+function localized(value, lang) {
+    if (value == null) return '';
+    if (typeof value === 'string') return value;
+    const l = lang || window.currentLanguage || 'zh';
+    return value[l] || value.zh || value.en || value.ja || '';
+}
+
+// 应用个人信息到页面（艺术家姓名、简介、邮箱、统计、照片）
+function applyProfileData() {
+    const siteData = getSiteData();
+    if (!siteData || !siteData.profile) return;
+    const profile = siteData.profile;
+
+    document.querySelectorAll('[data-i18n="artist-name"]').forEach(element => {
+        const name = localized(profile.name);
+        if (name) element.textContent = name;
     });
-    
-    // 智能更新个人简介
+
     const aboutIntro = document.querySelector('[data-i18n="about-intro"]');
     if (aboutIntro) {
-        const currentLang = window.currentLanguage || 'zh';
-        const defaultTranslation = window.i18nData && window.i18nData[currentLang] && window.i18nData[currentLang]['about-intro'];
-        
-        if (profile.bio && profile.bio !== defaultTranslation) {
-            const oldBio = aboutIntro.textContent;
-            aboutIntro.textContent = profile.bio;
-            aboutIntro.setAttribute('data-profile-updated', 'true');
-            if (oldBio !== profile.bio) {
-                console.log('📝 [个人信息] 应用自定义个人简介长度:', oldBio.length, ' -> ', profile.bio.length);
-                updatedCount++;
-            }
-        } else {
-            aboutIntro.removeAttribute('data-profile-updated');
-            console.log('📝 [个人信息] 个人简介使用默认翻译，移除保护');
-        }
+        const bio = localized(profile.bio);
+        if (bio) aboutIntro.textContent = bio;
     }
-    
-    // 智能更新联系邮箱
+
     const emailElement = document.getElementById('contact-email-address');
-    if (emailElement) {
-        // 邮箱通常都是自定义的，所以直接应用
-        if (profile.email) {
-            const oldEmail = emailElement.textContent;
-            emailElement.textContent = profile.email;
-            emailElement.setAttribute('data-profile-updated', 'true');
-            if (oldEmail !== profile.email) {
-                console.log('📝 [个人信息] 应用自定义邮箱:', oldEmail, ' -> ', profile.email);
-                updatedCount++;
-            }
-        }
-    } else {
-        console.log('⚠️ [个人信息] 未找到邮箱元素 contact-email-address');
+    if (emailElement && profile.email) {
+        emailElement.textContent = profile.email;
     }
-    
-    // 备用方法：通过类名查找邮箱元素（以防ID不存在）
-    const contactEmailElements = document.querySelectorAll('.contact-item p');
-    contactEmailElements.forEach(element => {
-        if (element.textContent.includes('@') || 
-            element.textContent.includes('linshilin') || 
-            element.textContent.includes('gmail.com')) {
-            const oldEmail = element.textContent;
-            element.textContent = profile.email;
-            element.setAttribute('data-profile-updated', 'true'); // 标记已更新
-            if (oldEmail !== profile.email) {
-                console.log('备用曹新邮箱:', oldEmail, ' -> ', profile.email);
-                updatedCount++;
-            }
-        }
-    });
-    
-    // 更新统计数据
+
     if (profile.stats) {
         updateStatistics(profile.stats);
     }
-    
-    console.log(`个人信息更新完成，共更新${updatedCount}个元素`); // 调试日志
-    
-    // 如果有i18n强制应用函数，也调用一下
-    if (typeof window.forceApplyProfileData === 'function') {
-        setTimeout(() => {
-            window.forceApplyProfileData();
-        }, 100);
+
+    // 艺术家照片：有配置则使用，加载失败时隐藏相框
+    const photoImg = document.querySelector('.about-image .image-frame img');
+    if (photoImg) {
+        if (profile.photo) {
+            photoImg.src = profile.photo;
+        }
+        photoImg.onerror = () => {
+            const frame = photoImg.closest('.about-image');
+            if (frame) frame.style.display = 'none';
+        };
     }
 }
 
-// 单独的统计数据更新函数
+// 更新统计数据
 function updateStatistics(stats) {
-    const statNumbers = document.querySelectorAll('.stat-number[data-count]');
-    statNumbers.forEach(element => {
-        const statItem = element.closest('.stat-item');
-        if (statItem) {
-            const statLabel = statItem.querySelector('.stat-label');
-            if (statLabel) {
-                const labelText = statLabel.textContent || statLabel.getAttribute('data-i18n');
-                if (labelText.includes('作品') || labelText.includes('artworks')) {
-                    element.dataset.count = stats.artworks;
-                    element.textContent = stats.artworks;
-                } else if (labelText.includes('展览') || labelText.includes('exhibitions')) {
-                    element.dataset.count = stats.exhibitions;
-                    element.textContent = stats.exhibitions;
-                } else if (labelText.includes('经验') || labelText.includes('experience')) {
-                    element.dataset.count = stats.experience;
-                    element.textContent = stats.experience;
-                }
-            }
+    const mapping = [
+        { key: 'artworks', i18nKey: 'stat-artworks' },
+        { key: 'exhibitions', i18nKey: 'stat-exhibitions' },
+        { key: 'experience', i18nKey: 'stat-experience' }
+    ];
+    mapping.forEach(({ key, i18nKey }) => {
+        const label = document.querySelector(`.stat-label[data-i18n="${i18nKey}"]`);
+        const statItem = label && label.closest('.stat-item');
+        const number = statItem && statItem.querySelector('.stat-number');
+        if (number && stats[key] != null) {
+            number.dataset.count = stats[key];
+            number.textContent = stats[key];
         }
     });
 }
-
-// 监听localStorage变化，实时更新页面内容
-function listenForDataUpdates() {
-    console.log('🔄 启动增强数据监听系统...'); // 调试日志
-    
-    // 方法1: 监听storage事件（跨标签页更新）
-    window.addEventListener('storage', function(e) {
-        console.log('📨 检测到localStorage变化:', e.key); // 调试日志
-        if (e.key === 'profile_data' || e.key === 'artworks_data' || e.key === 'i18n_data' || 
-            e.key === 'sync_timestamp' || e.key === 'last_admin_update') {
-            // 重新加载数据并更新页面
-            setTimeout(() => {
-                console.log('执行跨标签页数据更新'); // 调试日志
-                
-                // 先重新加载i18n和作品数据
-                if (e.key === 'artworks_data') {
-                    reloadArtworks();
-                }
-                if (e.key === 'i18n_data') {
-                    reloadI18nData();
-                }
-                
-                // 最后强制更新个人信息，确保不被覆盖
-                setTimeout(() => {
-                    console.log('强制应用个人信息更新，覆盖i18n');
-                    updateProfileData();
-                }, 300);
-            }, 100);
-        }
-    });
-    
-    // 定时检查数据更新（同标签页更新）
-    let lastProfileUpdate = localStorage.getItem('profile_data');
-    let lastArtworksUpdate = localStorage.getItem('artworks_data');
-    let lastI18nUpdate = localStorage.getItem('i18n_data');
-    
-    const checkInterval = setInterval(() => {
-        const currentProfile = localStorage.getItem('profile_data');
-        const currentArtworks = localStorage.getItem('artworks_data');
-        const currentI18n = localStorage.getItem('i18n_data');
-        
-        let hasUpdates = false;
-        
-        if (currentProfile !== lastProfileUpdate) {
-            console.log('检测到个人信息变化'); // 调试日志
-            lastProfileUpdate = currentProfile;
-            hasUpdates = true;
-        }
-        
-        if (currentArtworks !== lastArtworksUpdate) {
-            console.log('检测到作品数据变化'); // 调试日志
-            lastArtworksUpdate = currentArtworks;
-            reloadArtworks();
-            hasUpdates = true;
-        }
-        
-        if (currentI18n !== lastI18nUpdate) {
-            console.log('检测到多语言数据变化'); // 调试日志
-            lastI18nUpdate = currentI18n;
-            reloadI18nData();
-            hasUpdates = true;
-        }
-        
-        if (hasUpdates) {
-            console.log('数据更新完成，强制应用个人信息'); // 调试日志
-            // 确保个人信息最后更新，避免被覆盖，增加延迟
-            setTimeout(() => {
-                updateProfileData();
-                
-                // 再次确保个人信息应用成功（减少延迟，避免过度覆盖）
-                setTimeout(updateProfileData, 200);
-            }, 300);
-        }
-    }, 1000); // 每秒检查一次
-    
-    // 页面卸载时清除定时器
-    window.addEventListener('beforeunload', () => {
-        clearInterval(checkInterval);
-    });
-    
-    // 手动触发一次更新（确保页面加载时显示最新数据）
-    setTimeout(() => {
-        console.log('页面加载完成，执行初始数据更新'); // 调试日志
-        updateProfileData();
-    }, 800); // 增加延迟确保在i18n之后执行
-    
-    // 方法2: 监听BroadcastChannel（同源页面间通信）
-    if ('BroadcastChannel' in window) {
-        const channel = new BroadcastChannel('artwork_updates');
-        channel.addEventListener('message', function(e) {
-            console.log('📡 收到BroadcastChannel消息:', e.data);
-            if (e.data.type === 'DATA_UPDATED') {
-                console.log('🔄 通过BroadcastChannel触发数据更新');
-                setTimeout(() => {
-                    reloadArtworks();
-                    reloadI18nData();
-                    updateProfileData();
-                }, 100);
-            }
-        });
-        console.log('✅ BroadcastChannel监听器已启动');
-    }
-    
-    // 方法3: 监听postMessage（iframe/popup通信）
-    window.addEventListener('message', function(e) {
-        if (e.data && e.data.type === 'ARTWORK_DATA_UPDATED') {
-            console.log('📤 收到postMessage数据更新通知');
-            setTimeout(() => {
-                reloadArtworks();
-                reloadI18nData();
-                updateProfileData();
-            }, 100);
-        }
-    });
-    
-    // 方法4: 定时检查特殊更新标记
-    let lastUpdateCheck = localStorage.getItem('last_admin_update');
-    const updateCheckInterval = setInterval(() => {
-        const currentUpdate = localStorage.getItem('last_admin_update');
-        if (currentUpdate && currentUpdate !== lastUpdateCheck) {
-            console.log('⏰ 定时检查发现数据更新');
-            lastUpdateCheck = currentUpdate;
-            setTimeout(() => {
-                reloadArtworks();
-                reloadI18nData();  
-                updateProfileData();
-            }, 100);
-        }
-    }, 3000); // 每3秒检查一次
-    
-    // 清除定时器
-    window.addEventListener('beforeunload', () => {
-        clearInterval(updateCheckInterval);
-    });
-    
-    console.log('✅ 增强数据监听系统已全部启动');
-}
-
-// 重新加载作品数据
-function reloadArtworks() {
-    // 更新全局作品数据
-    window.artworks = getArtworksData();
-    
-    // 重新渲染作品集
-    if (window.renderArtworks && typeof window.renderArtworks === 'function') {
-        window.renderArtworks(window.artworks);
-    } else {
-        // 如果renderArtworks不存在，重新初始化作品集
-        initGallery();
-    }
-}
-
-// 重新加载多语言数据
-function reloadI18nData() {
-    // 更新全局i18n数据
-    const newI18nData = getI18nData();
-    Object.assign(i18n, newI18nData);
-    
-    // 重新应用当前语言
-    if (typeof switchLanguage === 'function' && window.currentLanguage) {
-        switchLanguage(window.currentLanguage);
-    }
-}
-
-// 添加全局函数用于手动刷新数据
-window.refreshProfileData = function() {
-    console.log('手动刷新个人信息数据'); // 调试日志
-    
-    // 强制更新个人信息
-    updateProfileData();
-    
-    // 使用i18n的强制应用函数
-    if (typeof window.forceApplyProfileData === 'function') {
-        setTimeout(() => {
-            window.forceApplyProfileData();
-        }, 200);
-    }
-    
-    // 特别检查邮箱更新
-    const storedProfile = localStorage.getItem('profile_data');
-    if (storedProfile) {
-        const profile = JSON.parse(storedProfile);
-        const emailElement = document.getElementById('contact-email-address');
-        if (emailElement && profile.email) {
-            console.log('特别检查强制更新邮箱:', emailElement.textContent, ' -> ', profile.email);
-            emailElement.textContent = profile.email;
-            emailElement.setAttribute('data-profile-updated', 'true');
-        }
-        
-        // 检查所有艺术家姓名元素
-        const artistElements = document.querySelectorAll('[data-i18n="artist-name"]');
-        artistElements.forEach(element => {
-            console.log('特别检查强制更新艺术家姓名:', element.textContent, ' -> ', profile.name);
-            element.textContent = profile.name;
-            element.setAttribute('data-profile-updated', 'true');
-        });
-        
-        // 检查个人简介
-        const aboutElement = document.querySelector('[data-i18n="about-intro"]');
-        if (aboutElement && profile.bio) {
-            console.log('特别检查强制更新个人简介长度:', aboutElement.textContent.length, ' -> ', profile.bio.length);
-            aboutElement.textContent = profile.bio;
-            aboutElement.setAttribute('data-profile-updated', 'true');
-        }
-    }
-    
-    // 显示提示
-    const notification = document.createElement('div');
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #48bb78;
-        color: white;
-        padding: 12px 24px;
-        border-radius: 8px;
-        z-index: 10000;
-        font-size: 14px;
-    `;
-    notification.textContent = '个人信息已强制刷新';
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        if (document.body.contains(notification)) {
-            document.body.removeChild(notification);
-        }
-    }, 3000);
-};
 
 // 等待 DOM 加载完成
 document.addEventListener('DOMContentLoaded', function() {
@@ -367,30 +91,16 @@ document.addEventListener('DOMContentLoaded', function() {
     initNavigation();
     initMobileMenu();
     initSmoothScroll();
-    
-    // 协调式个人信息更新（与语言系统协同工作）
-    setTimeout(() => {
-        console.log('📝 [个人信息] 开始协调式个人信息更新'); 
-        updateProfileData(); // 首次个人信息更新
-    }, 600); // 确保在i18n初始化完成后运行
-    
     initGallery();
     initModal();
     initCounters();
     initContactForm();
     initScrollEffects();
     initParallax();
-    
-    // 启动数据监听
-    listenForDataUpdates();
-    
-    // 添加键盘快捷键：按F5强制刷新个人信息
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'F5' && e.ctrlKey) {
-            e.preventDefault();
-            window.refreshProfileData();
-        }
-    });
+
+    // 应用个人信息（语言切换后重新应用以匹配当前语言）
+    applyProfileData();
+    window.addEventListener('languageChanged', applyProfileData);
 });
 
 // 页面加载动画
@@ -502,92 +212,28 @@ function initSmoothScroll() {
     });
 }
 
-// 获取作品集数据（优先从localStorage获取）
+// 获取作品集数据（来自 data/site-data.js）
 function getArtworksData() {
-    const storedArtworks = localStorage.getItem('artworks_data');
-    if (storedArtworks) {
-        return JSON.parse(storedArtworks);
+    const siteData = getSiteData();
+    if (siteData && Array.isArray(siteData.artworks)) {
+        return siteData.artworks;
     }
-    
-    // 默认作品数据（作为后备）
-    return [
-        {
-            id: 1,
-            titleKey: "artwork-1-title",
-            descriptionKey: "artwork-1-desc",
-            category: "paintings",
-            image: "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=500&h=600&fit=crop",
-            details: {
-                medium: "油画",
-                size: "80cm × 100cm",
-                year: "2024"
-            }
-        },
-        {
-            id: 2,
-            titleKey: "artwork-2-title",
-            descriptionKey: "artwork-2-desc",
-            category: "digital",
-            image: "https://images.unsplash.com/photo-1549490349-8643362247b5?w=500&h=600&fit=crop",
-            details: {
-                medium: "数字艺术",
-                size: "3000px × 4000px",
-                year: "2024"
-            }
-        },
-        {
-            id: 3,
-            titleKey: "artwork-3-title",
-            descriptionKey: "artwork-3-desc",
-            category: "sketches",
-            image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500&h=600&fit=crop",
-            details: {
-                medium: "炭笔素描",
-                size: "40cm × 50cm",
-                year: "2023"
-            }
-        },
-        {
-            id: 4,
-            titleKey: "artwork-4-title",
-            descriptionKey: "artwork-4-desc",
-            category: "paintings",
-            image: "https://images.unsplash.com/photo-1578321272176-b7bbc0679853?w=500&h=600&fit=crop",
-            details: {
-                medium: "水彩",
-                size: "60cm × 80cm",
-                year: "2023"
-            }
-        },
-        {
-            id: 5,
-            titleKey: "artwork-5-title",
-            descriptionKey: "artwork-5-desc",
-            category: "digital",
-            image: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=500&h=600&fit=crop",
-            details: {
-                medium: "数字绘画",
-                size: "4000px × 3000px",
-                year: "2024"
-            }
-        },
-        {
-            id: 6,
-            titleKey: "artwork-6-title",
-            descriptionKey: "artwork-6-desc",
-            category: "sketches",
-            image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500&h=600&fit=crop",
-            details: {
-                medium: "铅笔素描",
-                size: "35cm × 45cm",
-                year: "2023"
-            }
-        }
-    ];
+    console.warn('⚠️ 网站数据未加载（data/site-data.js 缺失），作品集为空');
+    return [];
 }
 
 // 作品集数据
 const artworks = getArtworksData();
+
+// 获取作品的多语言文本（兼容旧版 titleKey/descriptionKey 格式）
+function artworkText(artwork, field) {
+    const value = artwork[field];
+    if (value != null) {
+        return localized(value);
+    }
+    const legacyKey = field === 'title' ? artwork.titleKey : artwork.descriptionKey;
+    return legacyKey ? getText(legacyKey) : '';
+}
 
 // 初始化作品集
 function initGallery() {
@@ -604,8 +250,8 @@ function initGallery() {
             artworkCard.dataset.category = artwork.category;
             artworkCard.style.animationDelay = `${index * 0.1}s`;
             
-            const title = getText(artwork.titleKey);
-            const description = getText(artwork.descriptionKey);
+            const title = artworkText(artwork, 'title');
+            const description = artworkText(artwork, 'description');
             
             // 创建增强的作品卡片
             artworkCard.innerHTML = `
@@ -763,9 +409,9 @@ function openModal(artwork) {
     const modalDescription = document.getElementById('modal-description');
     const modalDetails = document.getElementById('modal-details');
     
-    const title = getText(artwork.titleKey);
-    const description = getText(artwork.descriptionKey);
-    
+    const title = artworkText(artwork, 'title');
+    const description = artworkText(artwork, 'description');
+
     modalImage.src = artwork.image;
     modalImage.alt = title;
     modalTitle.textContent = title;
@@ -1169,14 +815,14 @@ function openFullscreen(artwork) {
                 </svg>
             </button>
             <div class="fullscreen-image-container">
-                <img src="${artwork.image}" alt="${getText(artwork.titleKey)}" class="fullscreen-image">
+                <img src="${artwork.image}" alt="${artworkText(artwork, 'title')}" class="fullscreen-image">
                 <div class="image-loading">
                     <div class="loading-spinner"></div>
                 </div>
             </div>
             <div class="fullscreen-info">
-                <h2>${getText(artwork.titleKey)}</h2>
-                <p>${getText(artwork.descriptionKey)}</p>
+                <h2>${artworkText(artwork, 'title')}</h2>
+                <p>${artworkText(artwork, 'description')}</p>
                 <div class="fullscreen-details">
                     <span>${artwork.details.medium}</span>
                     <span>•</span>
@@ -1318,74 +964,3 @@ function openFullscreen(artwork) {
         fullscreenModal.classList.add('show');
     }, 10);
 }
-
-// 数据导出功能
-window.exportSiteData = function() {
-    console.log('📤 [数据导出] 开始导出网站数据...');
-    
-    try {
-        // 收集所有localStorage数据
-        const siteData = {
-            timestamp: new Date().toISOString(),
-            version: '1.0',
-            artworks: JSON.parse(localStorage.getItem('artworks_data') || '[]'),
-            profile: JSON.parse(localStorage.getItem('profile_data') || '{}'),
-            i18n: JSON.parse(localStorage.getItem('i18n_data') || '{}'),
-            siteConfig: JSON.parse(localStorage.getItem('site_config') || '{}')
-        };
-        
-        console.log('📊 导出数据统计:', {
-            作品数量: siteData.artworks.length,
-            个人信息: Object.keys(siteData.profile).length + '个字段',
-            多语言条目: Object.keys(siteData.i18n.zh || {}).length + '条',
-            配置项: Object.keys(siteData.siteConfig).length + '项'
-        });
-        
-        // 创建下载文件
-        const dataStr = JSON.stringify(siteData, null, 2);
-        const blob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        
-        // 创建下载链接
-        const link = document.createElement('a');
-        link.href = url;
-        const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-        link.download = `linshilin-portfolio-data-${timestamp}.json`;
-        
-        // 触发下载
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        // 清理URL对象
-        URL.revokeObjectURL(url);
-        
-        // 显示成功提示
-        const message = `✅ 数据导出成功！
-        
-📁 文件名: ${link.download}
-📊 包含数据:
-• ${siteData.artworks.length} 件作品
-• ${Object.keys(siteData.profile).length} 项个人信息
-• ${Object.keys(siteData.i18n.zh || {}).length} 条多语言文本
-
-📤 下一步操作:
-将导出的JSON文件发送给开发者，以便将您的修改同步到正式网站。
-
-💡 提示:
-这个文件包含了您在后台管理中的所有修改，包括新增的作品、编辑的信息和翻译文本。`;
-
-        alert(message);
-        
-    } catch (error) {
-        console.error('❌ [数据导出] 导出失败:', error);
-        alert(`❌ 数据导出失败
-        
-错误信息: ${error.message}
-
-请尝试以下解决方案:
-1. 刷新页面后重试
-2. 检查浏览器是否支持下载功能
-3. 联系开发者获取帮助`);
-    }
-};

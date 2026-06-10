@@ -189,22 +189,8 @@ const i18n = {
 // 当前语言状态
 let currentLanguage = 'zh';
 
-// 从localStorage获取多语言数据（支持后台管理修改）
+// 获取多语言数据（UI界面文本；作品和个人信息文本在 data/site-data.js 中）
 function getI18nData() {
-    const stored = localStorage.getItem('i18n_data');
-    if (stored) {
-        try {
-            const parsedData = JSON.parse(stored);
-            // 合并默认数据和存储数据
-            Object.keys(i18n).forEach(lang => {
-                if (parsedData[lang]) {
-                    Object.assign(i18n[lang], parsedData[lang]);
-                }
-            });
-        } catch (error) {
-            console.warn('⚠️ 解析存储的多语言数据失败，使用默认数据');
-        }
-    }
     return i18n;
 }
 
@@ -364,20 +350,24 @@ function updateLanguageButtonStates(lang) {
     });
 }
 
-// 安全获取个人信息数据
+// 获取个人信息数据（来自 data/site-data.js，按当前语言解析多语言字段）
 function getProfileData() {
     try {
-        if (typeof Storage === 'undefined' || !localStorage) {
-            console.warn('⚠️ localStorage不可用');
+        const siteData = window.SITE_DATA;
+        if (!siteData || !siteData.profile) {
             return null;
         }
-        
-        const stored = localStorage.getItem('profile_data');
-        if (!stored) {
-            return null;
-        }
-        
-        return JSON.parse(stored);
+        const profile = siteData.profile;
+        const pick = (value) => {
+            if (value == null) return '';
+            if (typeof value === 'string') return value;
+            return value[currentLanguage] || value.zh || value.en || value.ja || '';
+        };
+        return {
+            name: pick(profile.name),
+            bio: pick(profile.bio),
+            email: profile.email || ''
+        };
     } catch (error) {
         console.warn('⚠️ 获取个人信息数据失败:', error);
         return null;
