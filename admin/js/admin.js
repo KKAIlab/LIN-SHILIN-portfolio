@@ -247,7 +247,7 @@ class AdminPanel {
                 <img src="${imageUrl}" alt="${title}" class="artwork-image" loading="lazy">
                 ${isLocalDraft ? '<span class="draft-badge" style="position:absolute;top:8px;right:8px;background:#ed8936;color:white;font-size:11px;padding:2px 8px;border-radius:10px;">待发布</span>' : ''}
                 <div class="artwork-overlay">
-                    <button class="btn btn-sm btn-primary artwork-preview-btn" data-artwork-id="${artwork.id}" title="预览">👁</button>
+                    <button class="btn btn-sm btn-primary artwork-preview-btn" data-artwork-id="${artwork.id}" title="预览">预览</button>
                 </div>
             </div>
             <div class="artwork-info">
@@ -261,8 +261,8 @@ class AdminPanel {
                     <small>${artwork.details?.medium || '未知媒介'} | ${artwork.details?.size || '未知尺寸'}</small>
                 </div>
                 <div class="artwork-actions">
-                    <button class="btn btn-primary btn-small artwork-edit-btn" data-artwork-id="${artwork.id}" title="编辑作品">✏️ 编辑</button>
-                    <button class="btn btn-danger btn-small artwork-delete-btn" data-artwork-id="${artwork.id}" title="删除作品">🗑️ 删除</button>
+                    <button class="btn btn-primary btn-small artwork-edit-btn" data-artwork-id="${artwork.id}" title="编辑作品">编辑</button>
+                    <button class="btn btn-danger btn-small artwork-delete-btn" data-artwork-id="${artwork.id}" title="删除作品">删除</button>
                 </div>
             </div>
         `;
@@ -1014,12 +1014,12 @@ class AdminPanel {
         const hasChanges = dataManager.hasUnpublishedChanges();
 
         if (publishBtn) {
-            publishBtn.textContent = hasChanges ? '🚀 发布到网站 ●' : '🚀 发布到网站';
+            publishBtn.textContent = hasChanges ? '发布到网站 ●' : '发布到网站';
             publishBtn.classList.toggle('has-changes', hasChanges);
         }
         if (statusEl) {
             statusEl.textContent = hasChanges ? '有未发布的修改' : '所有修改已发布';
-            statusEl.style.color = hasChanges ? '#ed8936' : '#48bb78';
+            statusEl.style.color = hasChanges ? '#a86a44' : '#4f7a5e';
         }
     }
 
@@ -1112,15 +1112,15 @@ class AdminPanel {
             position: 'fixed',
             top: '20px',
             right: '20px',
-            padding: '12px 24px',
-            borderRadius: '8px',
-            color: 'white',
+            padding: '13px 24px',
+            borderRadius: '999px',
+            color: '#fcfaf5',
             fontWeight: '500',
             zIndex: '10000',
-            maxWidth: '360px',
-            transform: 'translateX(420px)',
-            transition: 'transform 0.3s ease-in-out',
-            backgroundColor: type === 'success' ? '#48bb78' : '#f56565'
+            maxWidth: '380px',
+            transform: 'translateX(440px)',
+            transition: 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)',
+            backgroundColor: type === 'success' ? '#4f7a5e' : '#b0492f'
         });
 
         document.body.appendChild(notification);

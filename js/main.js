@@ -106,14 +106,18 @@ document.addEventListener('DOMContentLoaded', function() {
 // 页面加载动画
 function initLoader() {
     const loader = document.getElementById('loader');
-    
-    window.addEventListener('load', function() {
-        setTimeout(() => {
-            loader.classList.add('hidden');
-            // 启动主页动画
-            startHeroAnimations();
-        }, 1000);
-    });
+    let dismissed = false;
+
+    function dismiss() {
+        if (dismissed) return;
+        dismissed = true;
+        loader.classList.add('hidden');
+        startHeroAnimations();
+    }
+
+    // 资源加载完成后尽快揭幕；同时设置兜底，避免慢网络下访客盯着加载幕
+    window.addEventListener('load', () => setTimeout(dismiss, 250));
+    setTimeout(dismiss, 2500);
 }
 
 // 主页动画
@@ -133,17 +137,20 @@ function initNavigation() {
     const navbar = document.getElementById('navbar');
     const navLinks = document.querySelectorAll('.nav-link');
     
-    // 滚动时改变导航栏样式
-    window.addEventListener('scroll', function() {
-        if (window.scrollY > 50) {
-            navbar.classList.add('scrolled');
-        } else {
-            navbar.classList.remove('scrolled');
-        }
-        
-        // 高亮当前部分
+    // 滚动时改变导航栏样式（rAF 节流，保证滚动流畅）
+    let navTicking = false;
+    function onScroll() {
+        navbar.classList.toggle('scrolled', window.scrollY > 50);
         highlightCurrentSection();
-    });
+        navTicking = false;
+    }
+    window.addEventListener('scroll', function() {
+        if (!navTicking) {
+            navTicking = true;
+            requestAnimationFrame(onScroll);
+        }
+    }, { passive: true });
+    onScroll();
     
     // 高亮当前部分的导航链接
     function highlightCurrentSection() {
@@ -483,19 +490,21 @@ function initContactForm() {
         // 这里你可以添加真实的表单提交逻辑
         // 例如使用 Formspree、Netlify Forms 或其他服务
         
-        // 模拟提交
+        // 模拟提交（用按钮状态反馈，避免打断浏览的弹窗）
         const submitBtn = form.querySelector('.submit-btn');
         const originalText = submitBtn.textContent;
-        
-        submitBtn.textContent = '发送中...';
+
+        submitBtn.textContent = '发送中…';
         submitBtn.disabled = true;
-        
+
         setTimeout(() => {
-            alert('消息已发送！感谢您的联系。');
+            submitBtn.textContent = '已发送，感谢您的来信';
             form.reset();
-            submitBtn.textContent = originalText;
-            submitBtn.disabled = false;
-        }, 2000);
+            setTimeout(() => {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }, 2600);
+        }, 1200);
     });
 }
 
@@ -527,19 +536,24 @@ function initScrollEffects() {
     });
 }
 
-// 视差效果
+// 视差效果（rAF 节流；页面上没有视差元素时不注册监听）
 function initParallax() {
     const shapes = document.querySelectorAll('.shape');
-    
+    if (!shapes.length) return;
+
+    let ticking = false;
     window.addEventListener('scroll', () => {
-        const scrolled = window.pageYOffset;
-        const rate = scrolled * -0.5;
-        
-        shapes.forEach((shape, index) => {
-            const speed = (index + 1) * 0.1;
-            shape.style.transform = `translateY(${rate * speed}px) rotate(${scrolled * 0.1}deg)`;
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => {
+            const rate = window.pageYOffset * -0.5;
+            shapes.forEach((shape, index) => {
+                const speed = (index + 1) * 0.1;
+                shape.style.transform = `translateY(${rate * speed}px)`;
+            });
+            ticking = false;
         });
-    });
+    }, { passive: true });
 }
 
 // 工具函数：节流

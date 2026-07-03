@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="艺术家作品集 - 展示原创艺术作品与创作理念">
-    <title>林时林作品集 | LIN SHILIN Portfolio</title>
-    
+    <meta name="description" content="林士林作品集 - 在光影与留白之间，探索原创艺术作品与创作理念">
+    <title>林士林作品集 | LIN SHILIN Portfolio</title>
+
     <!-- SEO和社交媒体优化 -->
-    <meta property="og:title" content="艺术家作品集">
-    <meta property="og:description" content="探索独特的艺术视角和创意作品">
+    <meta property="og:title" content="林士林作品集 | LIN SHILIN Portfolio">
+    <meta property="og:description" content="在光影与留白之间，探索独特的艺术视角和创意作品">
     <meta property="og:type" content="website">
     <meta property="og:image" content="./images/og-image.jpg">
-    
+
     <!-- 样式和字体 -->
     <link rel="stylesheet" href="./css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Cormorant+Garamond:wght@400;500;600&family=Noto+Serif+SC:wght@400;500;600&display=swap" rel="stylesheet">
     
     <!-- 图标 -->
     <link rel="icon" type="image/x-icon" href="./assets/favicon.ico">
@@ -26,7 +26,7 @@
     <!-- 加载动画 -->
     <div id="loader" class="loader">
         <div class="loader-content">
-            <div class="artist-signature">ART</div>
+            <div class="artist-signature">林士林</div>
             <div class="loading-bar"></div>
         </div>
     </div>
@@ -77,13 +77,13 @@
         <div class="hero-content">
             <div class="hero-text">
                 <h1 class="hero-title">
-                    <span class="line" data-i18n="hero-line1">泥与火</span>
-                    <span class="line" data-i18n="hero-line2">之间</span>
-                    <span class="line" data-i18n="hero-line3">陶艺</span>
+                    <span class="line" data-i18n="hero-line1">观物</span>
+                    <span class="line" data-i18n="hero-line2">造境</span>
+                    <span class="line" data-i18n="hero-line3">写心</span>
                 </h1>
-                <p class="hero-subtitle" data-i18n="hero-subtitle">在侘寂美学中寻找不完美的完美</p>
+                <p class="hero-subtitle" data-i18n="hero-subtitle">在光影与留白之间，寻找内心的风景</p>
                 <div class="hero-philosophy">
-                    <span class="japanese-text" data-i18n="japanese-philosophy">侘寂 • 物哀 • 幽玄</span>
+                    <span class="japanese-text" data-i18n="japanese-philosophy">侘寂 · 物哀 · 幽玄</span>
                 </div>
                 <a href="#gallery" class="cta-button pottery-style">
                     <span data-i18n="cta-button">欣赏作品</span>
@@ -92,14 +92,16 @@
                     </svg>
                 </a>
             </div>
-            <div class="hero-visual">
-                <div class="pottery-elements">
-                    <div class="clay-shape vessel"></div>
-                    <div class="clay-shape bowl"></div>
-                    <div class="clay-shape plate"></div>
-                    <div class="floating-particles"></div>
+            <div class="hero-visual" aria-hidden="true">
+                <div class="art-composition">
+                    <div class="tone-field field-a"></div>
+                    <div class="tone-field field-b"></div>
+                    <svg class="enso" viewBox="0 0 400 400" role="presentation">
+                        <path class="enso-stroke" pathLength="1120" stroke-width="3.2"
+                              d="M 258 52 A 168 168 0 1 0 340 130" transform="rotate(8 200 200)"/>
+                    </svg>
+                    <span class="vertical-mark">LIN SHILIN · PORTFOLIO</span>
                 </div>
-                <div class="texture-overlay"></div>
             </div>
         </div>
         <div class="scroll-indicator">
@@ -112,8 +114,8 @@
     <section id="about" class="about">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title" data-i18n="about-title">关于陶艺家</h2>
-                <p class="section-subtitle" data-i18n="about-subtitle">泥土与火焰间的诗意对话</p>
+                <h2 class="section-title" data-i18n="about-title">关于艺术家</h2>
+                <p class="section-subtitle" data-i18n="about-subtitle">在传统与当代之间的诗意对话</p>
             </div>
             <div class="about-content">
                 <div class="about-text">
@@ -122,16 +124,22 @@
                     </p>
                     <div class="craft-philosophy">
                         <div class="philosophy-item">
-                            <span class="philosophy-icon">🏺</span>
-                            <span class="philosophy-text" data-i18n="philosophy-pottery">陶艺技法</span>
+                            <span class="philosophy-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18"/></svg>
+                            </span>
+                            <span class="philosophy-text" data-i18n="philosophy-pottery">留白之美</span>
                         </div>
                         <div class="philosophy-item">
-                            <span class="philosophy-icon">🌸</span>
-                            <span class="philosophy-text" data-i18n="philosophy-wagashi">和果子美学</span>
+                            <span class="philosophy-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 17c3-1 5-4 6-8m3 12c2-2 4-6 4.5-11M17 21c1.5-2 3-5.5 3-9"/></svg>
+                            </span>
+                            <span class="philosophy-text" data-i18n="philosophy-wagashi">质感肌理</span>
                         </div>
                         <div class="philosophy-item">
-                            <span class="philosophy-icon">🌿</span>
-                            <span class="philosophy-text" data-i18n="philosophy-ikebana">花道精神</span>
+                            <span class="philosophy-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>
+                            </span>
+                            <span class="philosophy-text" data-i18n="philosophy-ikebana">光影诗意</span>
                         </div>
                     </div>
                     <div class="stats">
@@ -163,7 +171,7 @@
         <div class="container">
             <div class="section-header">
                 <h2 class="section-title" data-i18n="gallery-title">作品集</h2>
-                <p class="section-subtitle" data-i18n="gallery-subtitle">每一幅作品都是内心世界的投射</p>
+                <p class="section-subtitle" data-i18n="gallery-subtitle">每一件作品，都是一次凝视与回应</p>
             </div>
             
             <!-- 作品分类过滤器 -->
@@ -186,28 +194,28 @@
         <div class="container">
             <div class="section-header">
                 <h2 class="section-title" data-i18n="process-title">创作过程</h2>
-                <p class="section-subtitle" data-i18n="process-subtitle">从概念到成品的艺术之旅</p>
+                <p class="section-subtitle" data-i18n="process-subtitle">从凝视到落笔，一段缓慢而诚实的旅程</p>
             </div>
             <div class="process-steps">
                 <div class="step">
                     <div class="step-number">01</div>
-                    <h3 data-i18n="step1-title">灵感捕捉</h3>
-                    <p data-i18n="step1-desc">观察生活中的细节，收集色彩和形态的灵感</p>
+                    <h3 data-i18n="step1-title">观察与收集</h3>
+                    <p data-i18n="step1-desc">在日常的光影与细节中驻足，收集形态、色彩与情绪的种子</p>
                 </div>
                 <div class="step">
                     <div class="step-number">02</div>
-                    <h3 data-i18n="step2-title">概念构思</h3>
-                    <p data-i18n="step2-desc">将抽象的想法转化为具体的视觉概念</p>
+                    <h3 data-i18n="step2-title">构思与草图</h3>
+                    <p data-i18n="step2-desc">让抽象的感受沉淀成形，在反复的草图中寻找恰当的视觉语言</p>
                 </div>
                 <div class="step">
                     <div class="step-number">03</div>
-                    <h3 data-i18n="step3-title">创作实现</h3>
-                    <p data-i18n="step3-desc">运用各种技法和媒介将概念变为现实</p>
+                    <h3 data-i18n="step3-title">落笔与实验</h3>
+                    <p data-i18n="step3-desc">运用不同的技法与媒介大胆尝试，允许偶然与不完美发生</p>
                 </div>
                 <div class="step">
                     <div class="step-number">04</div>
-                    <h3 data-i18n="step4-title">完善细节</h3>
-                    <p data-i18n="step4-desc">精雕细琢，让每个细节都完美呈现</p>
+                    <h3 data-i18n="step4-title">沉淀与完成</h3>
+                    <p data-i18n="step4-desc">放下再拾起，反复审视与打磨，直到作品能够安静地自己说话</p>
                 </div>
             </div>
         </div>
@@ -259,9 +267,9 @@
     <!-- 页脚 -->
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2025 <span data-i18n="artist-name">林士林</span>. <span data-i18n="copyright">All rights reserved</span>.</p>
-            <p style="margin-top: 10px; font-size: 12px; opacity: 0.7;">
-                <a href="./admin/login.html" style="color: inherit; text-decoration: none;">🔒 管理后台</a>
+            <p>&copy; 2026 <span data-i18n="artist-name">林士林</span> · <span data-i18n="copyright">版权所有</span></p>
+            <p style="margin-top: 10px; font-size: 12px; opacity: 0.6;">
+                <a href="./admin/login.html" style="color: inherit; text-decoration: none;">管理后台</a>
             </p>
         </div>
     </footer>
