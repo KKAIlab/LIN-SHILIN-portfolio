@@ -20,6 +20,10 @@ window.SITE_DATA = {
     },
     "email": "linshilin.art@gmail.com",
     "photo": "",
+    "social": {
+      "instagram": "https://www.instagram.com/linshilin.art",
+      "weibo": ""
+    },
     "stats": {
       "artworks": 6,
       "exhibitions": 5,

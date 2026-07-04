@@ -833,6 +833,8 @@ class AdminPanel {
         document.getElementById('artist-name-ja').value = profile.name?.ja || '';
         document.getElementById('artist-bio').value = profile.bio?.zh || '';
         document.getElementById('contact-email').value = profile.email || '';
+        document.getElementById('profile-instagram').value = profile.social?.instagram || '';
+        document.getElementById('profile-weibo').value = profile.social?.weibo || '';
         document.getElementById('stat-artworks').value = profile.stats?.artworks ?? 0;
         document.getElementById('stat-exhibitions').value = profile.stats?.exhibitions ?? 0;
         document.getElementById('stat-experience').value = profile.stats?.experience ?? 0;
@@ -892,6 +894,10 @@ class AdminPanel {
                 ja: (profile.bio?.ja && profile.bio.ja !== oldBioZh) ? profile.bio.ja : bio
             };
             profile.email = document.getElementById('contact-email').value.trim();
+            profile.social = {
+                instagram: this.normalizeSocialUrl(document.getElementById('profile-instagram').value),
+                weibo: this.normalizeSocialUrl(document.getElementById('profile-weibo').value)
+            };
             profile.stats = {
                 artworks: parseInt(document.getElementById('stat-artworks').value) || 0,
                 exhibitions: parseInt(document.getElementById('stat-exhibitions').value) || 0,
@@ -1101,6 +1107,13 @@ class AdminPanel {
             authManager.logout();
             window.location.href = './login.html';
         }
+    }
+
+    // 整理社交链接：去空格，缺少协议时自动补 https://
+    normalizeSocialUrl(value) {
+        const url = (value || '').trim();
+        if (!url) return '';
+        return /^https?:\/\//i.test(url) ? url : 'https://' + url;
     }
 
     showNotification(message, type = 'success') {

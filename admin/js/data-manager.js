@@ -37,6 +37,7 @@ class DataManager {
             bio: { zh: '', en: '', ja: '' },
             email: '',
             photo: '',
+            social: { instagram: '', weibo: '' },
             stats: { artworks: 0, exhibitions: 0, experience: 0 }
         };
     }

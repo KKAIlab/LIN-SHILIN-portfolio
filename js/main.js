@@ -49,6 +49,27 @@ function applyProfileData() {
         emailElement.textContent = profile.email;
     }
 
+    // 社交链接：有配置的显示并设置跳转，未配置的隐藏
+    const social = profile.social || {};
+    document.querySelectorAll('.social-link[data-social]').forEach(link => {
+        const url = social[link.dataset.social];
+        if (url) {
+            link.href = url;
+            link.style.display = '';
+        } else {
+            link.style.display = 'none';
+        }
+    });
+    const emailLink = document.querySelector('.social-link[data-social-email]');
+    if (emailLink) {
+        if (profile.email) {
+            emailLink.href = 'mailto:' + profile.email;
+            emailLink.style.display = '';
+        } else {
+            emailLink.style.display = 'none';
+        }
+    }
+
     if (profile.stats) {
         updateStatistics(profile.stats);
     }
